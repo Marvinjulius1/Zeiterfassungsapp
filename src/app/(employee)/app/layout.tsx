@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { BottomBar } from "@/components/shell/bottom-bar";
+import { BottomBar, BottomBarTabs } from "@/components/shell/bottom-bar";
 import { PageTransition } from "@/components/shell/page-transition";
 import { Skeleton } from "@/design-system/components/skeleton";
 import { requireMember } from "@/lib/auth/session";
@@ -33,7 +33,9 @@ export default function EmployeeLayout({ children }: LayoutProps<"/app">) {
           </Guard>
         </Suspense>
       </main>
-      <BottomBar />
+      <Suspense fallback={<BottomBarTabs pathname={null} />}>
+        <BottomBar />
+      </Suspense>
     </>
   );
 }

@@ -185,6 +185,47 @@ begin
   end loop;
 
   -- ---------------------------------------------------------------------------
+  -- Heute: realistische Buchungen bis „jetzt" (für das Live-Board)
+  -- Marvin & Noah bleiben frei, damit man selbst stempeln kann.
+  -- ---------------------------------------------------------------------------
+  for r in
+    select m.id, m.email, c.daily_targets, c.school_days, row_number() over (order by m.email) as n
+      from public.memberships m
+      join public.employment_contracts c on c.membership_id = m.id
+     where m.org_id = v_org
+       and m.email not in ('marvin@zeitgeist.demo', 'noah@zeitgeist.demo', 'emilia@zeitgeist.demo')
+  loop
+    v_target := coalesce((r.daily_targets ->> extract(isodow from v_today)::text)::int, 0);
+    continue when v_target = 0 or extract(isodow from v_today)::int = any (r.school_days);
+    continue when r.n % 5 = 0;  -- ein paar sind noch nicht da
+    v_in  := (v_today + time '07:45' + make_interval(mins => ((r.n * 7) % 30)::int)) at time zone 'Europe/Berlin';
+    continue when v_in > now();
+    insert into public.time_events (id, membership_id, kind, occurred_at, received_at, work_date, source)
+      values (gen_random_uuid(), r.id, 'check_in', v_in, v_in, v_today, 'terminal_qr');
+    v_bs := v_in + make_interval(mins => (240 + (r.n * 11) % 40)::int);
+    if v_target > 360 and v_bs < now() then
+      insert into public.time_events (id, membership_id, kind, occurred_at, received_at, work_date, source)
+        values (gen_random_uuid(), r.id, 'break_start', v_bs, v_bs, v_today, 'app');
+      v_be := v_bs + interval '30 minutes';
+      if v_be < now() then
+        insert into public.time_events (id, membership_id, kind, occurred_at, received_at, work_date, source)
+          values (gen_random_uuid(), r.id, 'break_end', v_be, v_be, v_today, 'app');
+      end if;
+    end if;
+    v_out := v_in + make_interval(mins => v_target + case when v_target > 360 then 30 else 0 end);
+    if v_out < now() and v_be < now() then
+      insert into public.time_events (id, membership_id, kind, occurred_at, received_at, work_date, source)
+        values (gen_random_uuid(), r.id, 'check_out', v_out, v_out, v_today, 'terminal_qr');
+    end if;
+  end loop;
+
+  -- Emilia ist heute krankgemeldet
+  insert into public.absences (membership_id, type_id, start_date, end_date, status, reviewed_at)
+  select m.id, t.id, v_today, v_today + 2, 'approved', now()
+    from public.memberships m, public.absence_types t
+   where m.email = 'emilia@zeitgeist.demo' and t.org_id = v_org and t.key = 'sick';
+
+  -- ---------------------------------------------------------------------------
   -- Offene Anträge & Abwesenheiten
   -- ---------------------------------------------------------------------------
   insert into public.correction_requests (membership_id, work_date, kind, proposed, reason)

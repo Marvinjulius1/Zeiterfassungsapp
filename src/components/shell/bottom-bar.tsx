@@ -16,8 +16,12 @@ const tabs = [
   { href: "/app/profil", label: "Profil", icon: UserRound },
 ] as const;
 
+/** Bottom-Tabs; liest den Pfad – in <Suspense> rendern, Fallback: BottomBarTabs. */
 export function BottomBar() {
-  const pathname = usePathname();
+  return <BottomBarTabs pathname={usePathname()} />;
+}
+
+export function BottomBarTabs({ pathname }: { pathname: string | null }) {
   return (
     <nav
       aria-label="Hauptnavigation"
@@ -25,7 +29,7 @@ export function BottomBar() {
     >
       <ul className="mx-auto flex max-w-lg px-2 pt-2">
         {tabs.map(({ href, label, icon: Icon }) => {
-          const active = href === "/app" ? pathname === "/app" : pathname.startsWith(href);
+          const active = pathname !== null && (href === "/app" ? pathname === "/app" : pathname.startsWith(href));
           return (
             <li key={href} className="flex-1">
               <Link

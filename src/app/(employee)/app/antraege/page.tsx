@@ -45,8 +45,6 @@ async function Requests() {
   return (
     <>
       <CorrectionSheet
-        membershipId={viewer.active.id}
-        orgId={viewer.active.orgId}
         allowDatePick
         trigger={
           <Button size="lg" block>

@@ -876,6 +876,9 @@ isOneToOne: false
             "accept_invitation":
 { Args: { "p_token": string }; Returns: string
                            },
+"admin_correct_day":
+{ Args: { "p_add": Json,"p_membership": string,"p_reason": string,"p_void": (string)[],"p_work_date": string }; Returns: number
+                           },
 "create_organization":
 { Args: { "p_display_name": string,"p_location_name": string,"p_name": string,"p_state": unknown }; Returns: string
                            },
@@ -888,6 +891,20 @@ isOneToOne: false
 { Args: { "p_display_name": string,"p_email"?: string,"p_location_id"?: string,"p_org": string,"p_role"?: Database["public"]['Enums']["member_role"],"p_team_id"?: string }; Returns: {
               "expires_at": string,"membership_id": string,"token": string
             }[]
+                           },
+"reissue_invitation":
+{ Args: { "p_membership": string }; Returns: {
+              "expires_at": string,"token": string
+            }[]
+                           },
+"review_absence":
+{ Args: { "p_absence": string,"p_approve": boolean,"p_note"?: string }; Returns: undefined
+                           },
+"review_correction":
+{ Args: { "p_approve": boolean,"p_note"?: string,"p_request": string }; Returns: undefined
+                           },
+"self_apply_correction":
+{ Args: { "p_request": string }; Returns: undefined
                            },
 "stamp":
 { Args: { "p_event_id": string,"p_geo_accuracy"?: number,"p_geo_lat"?: number,"p_geo_lng"?: number,"p_kind": Database["public"]['Enums']["time_event_kind"],"p_membership_id": string,"p_note"?: string,"p_occurred_at"?: string,"p_offline"?: boolean,"p_project_id"?: string,"p_source"?: Database["public"]['Enums']["time_event_source"] }; Returns: {

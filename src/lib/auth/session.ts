@@ -33,7 +33,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return null;
 
-  const [{ data: profile }, { data: rows }] = await Promise.all([
+  const [{ data: profile }, { data: rows, error: rowsError }] = await Promise.all([
     supabase.from("profiles").select("full_name").eq("id", auth.user.id).maybeSingle(),
     supabase
       .from("memberships")
@@ -42,6 +42,9 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
       .eq("status", "active")
       .order("created_at"),
   ]);
+
+  // Ein Datenbankfehler darf nie als „keine Mitgliedschaft" gelten (→ falsches Onboarding)
+  if (rowsError) throw new Error(`Mitgliedschaften konnten nicht geladen werden: ${rowsError.message}`);
 
   const memberships: ViewerMembership[] = (rows ?? []).map((m) => ({
     id: m.id,

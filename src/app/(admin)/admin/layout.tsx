@@ -1,15 +1,21 @@
 import { Suspense } from "react";
 import { Logo } from "@/components/logo";
 import { AdminMobileBar } from "@/components/shell/admin-mobile-bar";
-import { AdminNav } from "@/components/shell/admin-nav";
+import { AdminNav, AdminNavLinks } from "@/components/shell/admin-nav";
+import { CommandButton, CommandPalette } from "@/components/shell/command-palette";
 import { Avatar } from "@/design-system/components/avatar";
 import { Skeleton } from "@/design-system/components/skeleton";
 import { ROLE_LABEL } from "@/lib/auth/roles";
 import { requireAdminArea } from "@/lib/auth/session";
 
 async function Guard({ children }: { children: React.ReactNode }) {
-  await requireAdminArea();
-  return <>{children}</>;
+  const viewer = await requireAdminArea();
+  return (
+    <>
+      {children}
+      <CommandPalette orgId={viewer.active.orgId} />
+    </>
+  );
 }
 
 async function SidebarUser() {
@@ -32,18 +38,25 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[260px_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line px-4 py-6 lg:flex" aria-label="Verwaltung">
-        <div className="px-3.5 pb-8">
+        <div className="px-3.5 pb-6">
           <Logo size={20} />
         </div>
+        <div className="pb-4">
+          <CommandButton />
+        </div>
         <nav aria-label="Verwaltung" className="flex-1 overflow-y-auto">
-          <AdminNav />
+          <Suspense fallback={<AdminNavLinks pathname={null} />}>
+            <AdminNav />
+          </Suspense>
         </nav>
         <Suspense fallback={<Skeleton className="h-[60px] w-full" />}>
           <SidebarUser />
         </Suspense>
       </aside>
       <div className="min-w-0">
-        <AdminMobileBar />
+        <Suspense fallback={<div className="h-14 border-b border-line lg:hidden" />}>
+          <AdminMobileBar />
+        </Suspense>
         <main id="main" className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 lg:py-12">
           <Suspense
             fallback={

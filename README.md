@@ -3,7 +3,7 @@
 Zeiterfassung, die Spaß macht – für Unternehmen in Deutschland.
 Mitarbeiter-App (mobile first), Verwaltung (Desktop/Tablet) und Terminal-Modus in einer Next.js-App mit Supabase.
 
-> Stand: **Phase 4 – Regel-Engine & Compliance** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
+> Stand: **Phase 5 – Verwaltung** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
 
 ---
 
@@ -68,6 +68,17 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 - **Offline:** In den DevTools „Offline" wählen und stempeln → „1 Buchung wartet" → wieder online → wird automatisch synchronisiert
 - **Zeiten:** Stundenkonto, Woche als Chart, Monat als Liste, Tagesdetail mit Zeitstrahl → „Korrektur beantragen"
 - **Anträge:** Status deiner Korrekturen
+
+**Verwaltung** (als Admin Sophie, am besten am Desktop):
+
+- **Live:** Wer ist da, in Pause, erwartet, ohne Buchung, abwesend oder im Feierabend. Das Board aktualisiert sich in Echtzeit. Zum Ausprobieren in einem zweiten Fenster als Marvin einchecken.
+- **Freigaben:** Korrekturen und Urlaub mit Vorher/Nachher. Tastatur: `J`/`K` wechseln, `A` genehmigen, `R` ablehnen. Auf dem Handy wischen.
+- **Mitarbeiter:** Suchen mit `/`, einladen mit `N`, per Link, QR-Code oder E-Mail. Mehrfachauswahl für Standort, Team und Archiv. Detailseite mit Stammdaten, versioniertem Vertrag, Personalakte (Upload), Hinweisen und Verlauf.
+- **Zeiten:** alle Personen pro Tag oder eine Person über 14 Tage. Ein Klick öffnet den Editor. Jede Korrektur braucht eine Begründung, alte Buchungen werden nur als ungültig markiert.
+- **Audit-Log:** alle Änderungen mit Begründung und der Prüfung, ob die Hash-Kette unverändert ist
+- **Einstellungen:** Firma, Aufbewahrung (≥ 24 Monate), Betriebsrat (§ 87 BetrVG), DSGVO
+- **⌘K** öffnet die Befehlspalette (Navigation, Aktionen, Personensuche). `G` + Buchstabe springt direkt, z. B. `G F` zu Freigaben, `G M` zu Mitarbeitern.
+- Als **Teamleiter Jonas** siehst du nur dein Team und kein Audit-Log.
 
 **Regeln & Arbeitsschutz** (als Admin Sophie):
 
@@ -141,9 +152,9 @@ supabase/
 ## Bekannte Grenzen (werden in späteren Phasen gelöst)
 
 - **Stundenkonto:** Es zählt nur Tage mit Buchungen. Urlaub und Krankheit fließen ab Phase 7 ein. Rundung und Pausenabzug wirken bereits.
-- **Verstöße quittieren** und Benachrichtigungen an Teamleiter kommen mit der Verwaltung (Phase 5), Push-Nachrichten in Phase 9.
+- **Benachrichtigungen** werden gespeichert (z. B. „Korrektur genehmigt“). Eine Glocke in der App und Push-Nachrichten kommen in Phase 9.
 - **Geofence-Pflicht** lässt sich einstellen. Die Standortabfrage in der App kommt mit Phase 6.
-- **Korrekturanträge:** Sie werden gespeichert, Freigabe und Übernahme folgen mit der Verwaltung in Phase 5.
+- **Einladung per E-Mail** öffnet dein Mailprogramm mit vorbereitetem Text. Ein eigener Mailversand folgt mit der Produktionseinrichtung.
 - **Offline:** Der Puffer greift, solange die App geöffnet ist. Das Öffnen der App ganz ohne Netz (Service Worker) folgt in Phase 9.
 
 ## Produktion (später)

@@ -24,12 +24,16 @@ export const adminNav = [
   { href: "/admin/einstellungen", label: "Einstellungen", icon: Settings2 },
 ] as const;
 
+/** Aktiver Pfad – braucht Request-Daten, daher in <Suspense> rendern (Fallback: AdminNavLinks). */
 export function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
+  return <AdminNavLinks pathname={usePathname()} onNavigate={onNavigate} />;
+}
+
+export function AdminNavLinks({ pathname, onNavigate }: { pathname: string | null; onNavigate?: () => void }) {
   return (
     <ul className="space-y-0.5">
       {adminNav.map(({ href, label, icon: Icon }) => {
-        const active = href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+        const active = pathname !== null && (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
         return (
           <li key={href}>
             <Link

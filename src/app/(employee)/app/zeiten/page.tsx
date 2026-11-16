@@ -106,7 +106,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/app/zeiten"
               <Badge tone={STATUS_LABEL[c.status]?.tone}>{STATUS_LABEL[c.status]?.label ?? c.status}</Badge>
             </Card>
           ))}
-          {date <= today && <CorrectionSheet membershipId={viewer.active.id} orgId={viewer.active.orgId} date={date} />}
+          {date <= today && <CorrectionSheet date={date} />}
         </>
       )}
     </>

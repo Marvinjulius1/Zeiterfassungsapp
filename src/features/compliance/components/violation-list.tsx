@@ -8,6 +8,7 @@ export interface ViolationItem {
   law: string | null;
   title?: string;
   subtitle?: string;
+  action?: React.ReactNode;
 }
 
 const style = {
@@ -35,6 +36,7 @@ export function ViolationList({ items, className }: { items: ViolationItem[]; cl
               <p className={cn("text-sm", v.title ? "mt-0.5 text-fg-2" : "text-[15px] text-fg")}>{v.message}</p>
               {v.law && <p className="mt-1 text-xs font-medium text-fg-3">{v.law}</p>}
             </div>
+            {v.action && <div className="shrink-0 self-center">{v.action}</div>}
           </li>
         );
       })}

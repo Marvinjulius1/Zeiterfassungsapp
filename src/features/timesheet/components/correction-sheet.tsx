@@ -9,7 +9,7 @@ import { Input } from "@/design-system/components/input";
 import { Sheet } from "@/design-system/components/sheet";
 import { toast } from "@/design-system/components/toaster";
 import { haptic } from "@/lib/haptics";
-import { createClient } from "@/lib/supabase/client";
+import { submitCorrection } from "../actions";
 import { berlinDateKey, formatDayLong, TZ } from "@/lib/time/berlin";
 import { cn } from "@/lib/cn";
 import { CORRECTION_KIND_LABEL } from "../labels";
@@ -31,14 +31,10 @@ function toIso(date: string, time: string): string {
 }
 
 export function CorrectionSheet({
-  membershipId,
-  orgId,
   date: initialDate,
   trigger,
   allowDatePick = false,
 }: {
-  membershipId: string;
-  orgId: string;
   date?: string;
   trigger?: React.ReactNode;
   allowDatePick?: boolean;
@@ -59,7 +55,8 @@ export function CorrectionSheet({
     e.preventDefault();
     if (!valid) return;
     setBusy(true);
-    const proposed =
+    type Proposed = { kind: "check_in" | "break_start" | "break_end" | "check_out"; occurred_at: string };
+    const proposed: Proposed[] =
       kind === "missing_check_in"
         ? [{ kind: "check_in", occurred_at: toIso(date, time) }]
         : kind === "missing_check_out"
@@ -73,22 +70,16 @@ export function CorrectionSheet({
                 { kind: "check_in", occurred_at: toIso(date, time) },
                 { kind: "check_out", occurred_at: toIso(date, timeTo) },
               ];
-    const { error } = await createClient().from("correction_requests").insert({
-      membership_id: membershipId,
-      org_id: orgId, // wird serverseitig zusätzlich aus der Mitgliedschaft erzwungen
-      work_date: date,
-      kind,
-      proposed,
-      reason: reason.trim(),
-    });
+    const res = await submitCorrection({ workDate: date, kind, proposed, reason: reason.trim() });
     setBusy(false);
-    if (error) {
+    if (!res.ok) {
       haptic("error");
-      toast.error("Antrag konnte nicht gesendet werden.", { description: error.message });
+      toast.error("Antrag konnte nicht gesendet werden.", { description: res.error });
       return;
     }
     haptic("success");
-    toast.success("Antrag gesendet", { description: "Du bekommst Bescheid, sobald er bearbeitet ist." });
+    if (res.applied) toast.success("Korrektur übernommen", { description: "Deine Firma erlaubt Selbstkorrekturen. Die Änderung ist protokolliert." });
+    else toast.success("Antrag gesendet", { description: "Du bekommst Bescheid, sobald er bearbeitet ist." });
     setOpen(false);
     setReason("");
     router.refresh();
