@@ -53,8 +53,12 @@ export function TodayView(props: TodayViewProps) {
   async function act(kind: EventKind) {
     const res = await stamp(kind);
     if (!res.ok) {
-      toast.error(res.error ?? "Das hat nicht geklappt.");
+      if (res.blocked) toast.warning("Gerade nicht möglich", { description: res.error });
+      else toast.error(res.error ?? "Das hat nicht geklappt.");
       return;
+    }
+    for (const w of res.warnings ?? []) {
+      toast.warning(w.message, { duration: 8000 });
     }
     if (kind !== "check_in" && kind !== "check_out") haptic("medium");
     const time = res.event ? formatTime(res.event.occurredAt) : "";

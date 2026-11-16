@@ -129,14 +129,14 @@ isOneToOne: false
                   ]
                 },"compliance_violations": {
                   Row: {
-                    "acknowledged_at": string | null,"acknowledged_by": string | null,"code": string,"details": NonNullable<Json>,"detected_at": string,"id": string,"membership_id": string,"org_id": string,"severity": Database["public"]['Enums']["violation_severity"],"work_date": string
+                    "acknowledged_at": string | null,"acknowledged_by": string | null,"code": string,"details": NonNullable<Json>,"detected_at": string,"id": string,"law": string | null,"membership_id": string,"message": string,"org_id": string,"severity": Database["public"]['Enums']["violation_severity"],"work_date": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "acknowledged_at"?: string | null,"acknowledged_by"?: string | null,"code": string,"details"?: NonNullable<Json>,"detected_at"?: string,"id"?: string,"membership_id": string,"org_id": string,"severity": Database["public"]['Enums']["violation_severity"],"work_date": string
+                    "acknowledged_at"?: string | null,"acknowledged_by"?: string | null,"code": string,"details"?: NonNullable<Json>,"detected_at"?: string,"id"?: string,"law"?: string | null,"membership_id": string,"message"?: string,"org_id": string,"severity": Database["public"]['Enums']["violation_severity"],"work_date": string
                   }
                   Update: {
-                    "acknowledged_at"?: string | null,"acknowledged_by"?: string | null,"code"?: string,"details"?: NonNullable<Json>,"detected_at"?: string,"id"?: string,"membership_id"?: string,"org_id"?: string,"severity"?: Database["public"]['Enums']["violation_severity"],"work_date"?: string
+                    "acknowledged_at"?: string | null,"acknowledged_by"?: string | null,"code"?: string,"details"?: NonNullable<Json>,"detected_at"?: string,"id"?: string,"law"?: string | null,"membership_id"?: string,"message"?: string,"org_id"?: string,"severity"?: Database["public"]['Enums']["violation_severity"],"work_date"?: string
                   }
                   Relationships: [
                     {
@@ -843,14 +843,14 @@ isOneToOne: false
                   ]
                 },"work_days": {
                   Row: {
-                    "break_minutes": number,"first_in": string | null,"gross_minutes": number,"last_out": string | null,"membership_id": string,"net_minutes": number,"org_id": string,"recomputed_at": string,"status": string,"surcharges": NonNullable<Json>,"target_minutes": number,"valued_minutes": number,"work_date": string
+                    "auto_break_minutes": number,"break_minutes": number,"evaluated_at": string | null,"first_in": string | null,"gross_minutes": number,"last_out": string | null,"membership_id": string,"net_minutes": number,"org_id": string,"recomputed_at": string,"status": string,"surcharges": NonNullable<Json>,"target_minutes": number,"valued_minutes": number,"work_date": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "break_minutes"?: number,"first_in"?: string | null,"gross_minutes"?: number,"last_out"?: string | null,"membership_id": string,"net_minutes"?: number,"org_id": string,"recomputed_at"?: string,"status"?: string,"surcharges"?: NonNullable<Json>,"target_minutes"?: number,"valued_minutes"?: number,"work_date": string
+                    "auto_break_minutes"?: number,"break_minutes"?: number,"evaluated_at"?: string | null,"first_in"?: string | null,"gross_minutes"?: number,"last_out"?: string | null,"membership_id": string,"net_minutes"?: number,"org_id": string,"recomputed_at"?: string,"status"?: string,"surcharges"?: NonNullable<Json>,"target_minutes"?: number,"valued_minutes"?: number,"work_date": string
                   }
                   Update: {
-                    "break_minutes"?: number,"first_in"?: string | null,"gross_minutes"?: number,"last_out"?: string | null,"membership_id"?: string,"net_minutes"?: number,"org_id"?: string,"recomputed_at"?: string,"status"?: string,"surcharges"?: NonNullable<Json>,"target_minutes"?: number,"valued_minutes"?: number,"work_date"?: string
+                    "auto_break_minutes"?: number,"break_minutes"?: number,"evaluated_at"?: string | null,"first_in"?: string | null,"gross_minutes"?: number,"last_out"?: string | null,"membership_id"?: string,"net_minutes"?: number,"org_id"?: string,"recomputed_at"?: string,"status"?: string,"surcharges"?: NonNullable<Json>,"target_minutes"?: number,"valued_minutes"?: number,"work_date"?: string
                   }
                   Relationships: [
                     {

@@ -8,6 +8,7 @@ import { Skeleton } from "@/design-system/components/skeleton";
 import { WeekChart } from "@/design-system/components/week-chart";
 import { Timeline } from "@/features/stamping/components/timeline";
 import { CorrectionSheet } from "@/features/timesheet/components/correction-sheet";
+import { ViolationList } from "@/features/compliance/components/violation-list";
 import { DayList } from "@/features/timesheet/components/day-list";
 import { PeriodNav } from "@/features/timesheet/components/period-nav";
 import { CORRECTION_KIND_LABEL, STATUS_LABEL } from "@/features/timesheet/labels";
@@ -95,6 +96,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/app/zeiten"
           ) : (
             <p className="py-4 text-center text-[15px] text-fg-2">An diesem Tag gibt es keine Buchungen.</p>
           )}
+          {ts.violations.length > 0 && <ViolationList items={ts.violations} />}
           {ts.corrections.map((c) => (
             <Card key={c.id} className="flex items-start justify-between gap-4">
               <div>

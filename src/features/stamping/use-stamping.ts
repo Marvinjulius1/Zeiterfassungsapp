@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import type { StampResponse } from "@/app/api/stamp/route";
 import { enqueue, isNetworkError, readQueue, removeFromQueue, type QueuedStamp } from "@/lib/offline/stamp-queue";
 import { haptic } from "@/lib/haptics";
 import { allowedActions, summarizeDay, type DayEvent, type EventKind } from "./day-state";
@@ -9,8 +9,27 @@ import { allowedActions, summarizeDay, type DayEvent, type EventKind } from "./d
 export interface StampResult {
   ok: boolean;
   offline?: boolean;
+  blocked?: boolean;
   error?: string;
   event?: DayEvent;
+  warnings?: { code: string; message: string; severity: string }[];
+}
+
+/** Ruft /api/stamp auf. Wirft nur bei Netzwerkfehlern (→ Offline-Puffer). */
+async function postStamp(body: {
+  membershipId: string;
+  eventId: string;
+  kind: EventKind;
+  offline?: boolean;
+  occurredAt?: string;
+}): Promise<StampResponse> {
+  const res = await fetch("/api/stamp", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (res.status >= 500) throw new TypeError("Server nicht erreichbar"); // später erneut versuchen
+  return (await res.json()) as StampResponse;
 }
 
 /**
@@ -37,23 +56,27 @@ export function useStamping(membershipId: string, initialEvents: DayEvent[], now
     flushing.current = true;
     try {
       const q = (await refreshPending()).sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
-      const supabase = createClient();
       for (const item of q) {
-        const { data, error } = await supabase.rpc("stamp", {
-          p_membership_id: item.membershipId,
-          p_event_id: item.id,
-          p_kind: item.kind,
-          p_source: item.source,
-          p_offline: true,
-          p_occurred_at: item.occurredAt,
-        });
-        if (error && isNetworkError(error)) break; // später erneut
+        let res: StampResponse;
+        try {
+          res = await postStamp({
+            membershipId: item.membershipId,
+            eventId: item.id,
+            kind: item.kind,
+            offline: true,
+            occurredAt: item.occurredAt,
+          });
+        } catch {
+          break; // weiterhin offline – später erneut
+        }
         await removeFromQueue(item.id);
-        if (error) {
+        if (!res.ok) {
+          const msg = res.error;
           setEvents((ev) => ev.filter((e) => e.id !== item.id));
-          window.dispatchEvent(new CustomEvent("zg:stamp-rejected", { detail: error.message }));
-        } else if (data) {
-          setEvents((ev) => ev.map((e) => (e.id === item.id ? { ...e, occurredAt: data.occurred_at, pending: false } : e)));
+          window.dispatchEvent(new CustomEvent("zg:stamp-rejected", { detail: msg }));
+        } else {
+          const ev2 = res.event;
+          setEvents((ev) => ev.map((e) => (e.id === item.id ? { ...e, occurredAt: ev2.occurredAt, pending: false } : e)));
         }
       }
     } finally {
@@ -107,21 +130,21 @@ export function useStamping(membershipId: string, initialEvents: DayEvent[], now
 
       try {
         if (typeof navigator !== "undefined" && navigator.onLine === false) return await goOffline();
-        const { data, error } = await createClient().rpc("stamp", {
-          p_membership_id: membershipId,
-          p_event_id: optimistic.id,
-          p_kind: kind,
-          p_source: "app",
-        });
-        if (error) {
-          if (isNetworkError(error)) return await goOffline();
-          setEvents((ev) => ev.filter((e) => e.id !== optimistic.id));
-          haptic("error");
-          return { ok: false, error: error.message };
+        let res: StampResponse;
+        try {
+          res = await postStamp({ membershipId, eventId: optimistic.id, kind });
+        } catch (e) {
+          if (isNetworkError({ message: String(e), code: "" })) return await goOffline();
+          throw e;
         }
-        const confirmed: DayEvent = { id: data.id, kind: data.kind, occurredAt: data.occurred_at };
+        if (!res.ok) {
+          setEvents((ev) => ev.filter((e) => e.id !== optimistic.id));
+          haptic(res.blocked ? "warning" : "error");
+          return { ok: false, error: res.error, blocked: res.blocked };
+        }
+        const confirmed: DayEvent = { id: res.event.id, kind: res.event.kind as EventKind, occurredAt: res.event.occurredAt };
         setEvents((ev) => ev.map((e) => (e.id === optimistic.id ? confirmed : e)));
-        return { ok: true, event: confirmed };
+        return { ok: true, event: confirmed, warnings: res.warnings };
       } finally {
         setBusy(false);
       }

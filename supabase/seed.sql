@@ -33,7 +33,15 @@ declare
   v_jitter int;
   v_break int;
   v_today date := (now() at time zone 'Europe/Berlin')::date;
+  -- Tage für bewusste Demo-Verstöße – immer passende Werktage, egal wann der Seed läuft
+  v_lena_day  date;  -- > 10 h
+  v_lukas_day date;  -- Spätschicht, am Folgetag zu früh → Ruhezeit
+  v_noah_day  date;  -- Jugendlicher bis nach 20 Uhr
 begin
+  select max(x)::date into v_lena_day  from generate_series(v_today - 14, v_today - 7, interval '1 day') x where extract(isodow from x) between 1 and 5;
+  select max(x)::date into v_lukas_day from generate_series(v_today - 10, v_today - 3, interval '1 day') x where extract(isodow from x) between 1 and 4;
+  select max(x)::date into v_noah_day  from generate_series(v_today - 8,  v_today - 2, interval '1 day') x where extract(isodow from x) in (1, 2, 4, 5);
+
   perform setseed(0.42);
 
   insert into public.organizations (id, name, slug, default_state, onboarding_completed_at)
@@ -119,33 +127,59 @@ begin
       v_target := coalesce((r.targets::jsonb ->> extract(isodow from d)::text)::int, 0);
       continue when v_target = 0;
       continue when extract(isodow from d)::int = any (r.school);   -- Berufsschule
-      continue when random() < 0.04;                                   -- gelegentlich frei/krank
+      continue when random() < 0.04 and d not in (v_lena_day, v_lukas_day, v_lukas_day + 1, v_noah_day); -- gelegentlich frei
 
       v_jitter := (random() * 50)::int - 20;
       v_in := (d + time '08:00' + make_interval(mins => v_jitter)) at time zone 'Europe/Berlin';
 
       if v_target <= 360 then
-        -- kurze Schicht: Pause nur, wenn > 6 h nötig wäre – hier keine
-        v_out := v_in + make_interval(mins => v_target + (random() * 20)::int - 5);
-        insert into public.time_events (id, membership_id, kind, occurred_at, work_date, source) values
-          (gen_random_uuid(), v_mid, 'check_in',  v_in,  d, 'terminal_qr'),
-          (gen_random_uuid(), v_mid, 'check_out', v_out, d, 'terminal_qr');
+        -- kurze Schicht: keine Pause nötig
+        v_out := v_in + make_interval(mins => v_target + (random() * 20)::int - 10);
+        insert into public.time_events (id, membership_id, kind, occurred_at, received_at, work_date, source) values
+          (gen_random_uuid(), v_mid, 'check_in',  v_in,  v_in,  d, 'terminal_qr'),
+          (gen_random_uuid(), v_mid, 'check_out', v_out, v_out, d, 'terminal_qr');
+      elsif r.birth is not null then
+        -- Jugendliche (JArbSchG): 60 Min. Pause nach spätestens 4 h, max. 8 h
+        v_break := 60 + (random() * 5)::int;
+        v_bs := v_in + make_interval(mins => 225 + (random() * 40)::int);
+        v_be := v_bs + make_interval(mins => v_break);
+        v_out := v_in + make_interval(mins => v_target + v_break - (random() * 25)::int);
+        if d = v_noah_day then  -- bewusster Verstoß: bis nach 20 Uhr (Nachtruhe)
+          v_in := (d + time '12:00') at time zone 'Europe/Berlin';
+          v_bs := v_in + interval '3 hours'; v_be := v_bs + interval '60 minutes';
+          v_out := (d + time '20:40') at time zone 'Europe/Berlin';
+        end if;
+        insert into public.time_events (id, membership_id, kind, occurred_at, received_at, work_date, source) values
+          (gen_random_uuid(), v_mid, 'check_in',    v_in,  v_in,  d, 'app'),
+          (gen_random_uuid(), v_mid, 'break_start', v_bs,  v_bs,  d, 'app'),
+          (gen_random_uuid(), v_mid, 'break_end',   v_be,  v_be,  d, 'app'),
+          (gen_random_uuid(), v_mid, 'check_out',   v_out, v_out, d, 'app');
       else
-        v_break := case when random() < 0.85 then 30 + (random() * 15)::int else 20 end; -- teils zu kurz
+        v_break := case when random() < 0.95 then 30 + (random() * 15)::int else 20 end; -- selten zu kurz
         v_bs := v_in + make_interval(mins => 210 + (random() * 60)::int);
         v_be := v_bs + make_interval(mins => v_break);
-        v_out := v_in + make_interval(mins => v_target + v_break + (random() * 50)::int - 15);
+        v_out := v_in + make_interval(mins => v_target + v_break + (random() * 40)::int - 20);
 
-        -- Ein paar bewusste Verstöße für die Demo
-        if r.email = 'lena@zeitgeist.demo' and d = v_today - 9 then
-          v_out := v_in + interval '10 hours 40 minutes';               -- > 10 h (§ 3 ArbZG)
+        -- Bewusste Verstöße für die Demo
+        if r.email = 'lena@zeitgeist.demo' and d = v_lena_day then
+          v_out := v_in + interval '11 hours 15 minutes';               -- > 10 h netto (§ 3 ArbZG)
+        end if;
+        if r.email = 'lukas@zeitgeist.demo' and d = v_lukas_day then
+          v_in := (d + time '13:30') at time zone 'Europe/Berlin';      -- Spätschicht …
+          v_bs := v_in + interval '4 hours'; v_be := v_bs + interval '30 minutes';
+          v_out := (d + time '22:45') at time zone 'Europe/Berlin';
+        end if;
+        if r.email = 'lukas@zeitgeist.demo' and d = v_lukas_day + 1 then
+          v_in := (d + time '07:15') at time zone 'Europe/Berlin';      -- … früh rein: < 11 h Ruhezeit (§ 5 ArbZG)
+          v_bs := v_in + interval '4 hours'; v_be := v_bs + interval '30 minutes';
+          v_out := v_in + interval '8 hours 30 minutes';
         end if;
 
-        insert into public.time_events (id, membership_id, kind, occurred_at, work_date, source) values
-          (gen_random_uuid(), v_mid, 'check_in',    v_in,  d, 'app'),
-          (gen_random_uuid(), v_mid, 'break_start', v_bs,  d, 'app'),
-          (gen_random_uuid(), v_mid, 'break_end',   v_be,  d, 'app'),
-          (gen_random_uuid(), v_mid, 'check_out',   v_out, d, 'app');
+        insert into public.time_events (id, membership_id, kind, occurred_at, received_at, work_date, source) values
+          (gen_random_uuid(), v_mid, 'check_in',    v_in,  v_in,  d, 'app'),
+          (gen_random_uuid(), v_mid, 'break_start', v_bs,  v_bs,  d, 'app'),
+          (gen_random_uuid(), v_mid, 'break_end',   v_be,  v_be,  d, 'app'),
+          (gen_random_uuid(), v_mid, 'check_out',   v_out, v_out, d, 'app');
       end if;
     end loop;
   end loop;

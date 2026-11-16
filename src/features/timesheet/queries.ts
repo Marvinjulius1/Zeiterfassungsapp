@@ -32,6 +32,7 @@ export interface Timesheet {
   balanceMinutes: number;
   events: DayEvent[];
   corrections: CorrectionRow[];
+  violations: { id: string; severity: "info" | "warning" | "violation"; message: string; law: string | null }[];
 }
 
 export async function getTimesheet(membershipId: string, view: View, date: string): Promise<Timesheet> {
@@ -39,7 +40,7 @@ export async function getTimesheet(membershipId: string, view: View, date: strin
   const range = rangeFor(view, date);
   const today = berlinDateKey();
 
-  const [workDays, contract, history, adjustments, events, corrections] = await Promise.all([
+  const [workDays, contract, history, adjustments, events, corrections, violations] = await Promise.all([
     supabase
       .from("work_days")
       .select("work_date, net_minutes, break_minutes, valued_minutes, target_minutes, first_in, last_out, status")
@@ -76,6 +77,14 @@ export async function getTimesheet(membershipId: string, view: View, date: strin
           .eq("work_date", date)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] as { id: string; work_date: string; kind: string; status: string; reason: string; created_at: string }[] }),
+    view === "day"
+      ? supabase
+          .from("compliance_violations")
+          .select("id, severity, message, law")
+          .eq("membership_id", membershipId)
+          .eq("work_date", date)
+          .order("severity", { ascending: false })
+      : Promise.resolve({ data: [] as { id: string; severity: "info" | "warning" | "violation"; message: string; law: string | null }[] }),
   ]);
 
   const byDate = new Map((workDays.data ?? []).map((w) => [w.work_date, w]));
@@ -124,6 +133,7 @@ export async function getTimesheet(membershipId: string, view: View, date: strin
     totals,
     balanceMinutes,
     events: (events.data ?? []).map((e) => ({ id: e.id, kind: e.kind, occurredAt: e.occurred_at })),
+    violations: violations.data ?? [],
     corrections: (corrections.data ?? []).map((c) => ({
       id: c.id,
       workDate: c.work_date,

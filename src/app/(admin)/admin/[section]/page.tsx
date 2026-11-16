@@ -12,7 +12,6 @@ const sections = {
   schichtplan: { title: "Schichtplan", phase: 7, text: "Drag-and-drop-Wochenplaner mit Konfliktprüfung." },
   abwesenheiten: { title: "Abwesenheiten", phase: 7, text: "Teamkalender mit Feiertagen je Bundesland." },
   berichte: { title: "Berichte & Export", phase: 8, text: "PDF, CSV/Excel und DATEV-Lohnexport." },
-  regeln: { title: "Regeln", phase: 4, text: "Klartext-Regeln mit Schiebereglern und Schaltern." },
   standorte: { title: "Standorte & Terminals", phase: 6, text: "Standorte, Geofence und Terminal-Kopplung." },
   audit: { title: "Audit-Log", phase: 5, text: "Wer hat wann was geändert – manipulationssicher per Hash-Kette." },
   einstellungen: { title: "Einstellungen", phase: 5, text: "Firma, Aufbewahrungsfristen, DSGVO und Betriebsrat-Hinweis." },
