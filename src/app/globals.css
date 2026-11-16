@@ -1,26 +1,100 @@
 @import "tailwindcss";
+@import "../design-system/tokens.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Dark ist Standard. [data-theme] wird vor dem ersten Paint gesetzt (siehe layout.tsx). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "SF Pro Text", sans-serif;
+
+  --color-bg: var(--zg-bg);
+  --color-surface: var(--zg-surface);
+  --color-surface-2: var(--zg-surface-2);
+  --color-surface-3: var(--zg-surface-3);
+  --color-line: var(--zg-line);
+  --color-line-strong: var(--zg-line-strong);
+  --color-fg: var(--zg-fg);
+  --color-fg-2: var(--zg-fg-2);
+  --color-fg-3: var(--zg-fg-3);
+  --color-inverse: var(--zg-inverse);
+  --color-inverse-fg: var(--zg-inverse-fg);
+  --color-ok: var(--zg-ok);
+  --color-pause: var(--zg-pause);
+  --color-alert: var(--zg-alert);
+  --color-ok-soft: var(--zg-ok-soft);
+  --color-pause-soft: var(--zg-pause-soft);
+  --color-alert-soft: var(--zg-alert-soft);
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-2xl: 28px;
+
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    background: var(--zg-bg);
+    color: var(--zg-fg);
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+  html[data-theme="light"] {
+    color-scheme: light;
+  }
+  body {
+    background: var(--zg-bg);
+    min-height: 100dvh;
+    font-feature-settings: "cv11", "ss01";
+  }
+  ::selection {
+    background: var(--zg-fg);
+    color: var(--zg-bg);
+  }
+  :focus-visible {
+    outline: 2px solid var(--zg-fg);
+    outline-offset: 3px;
+    border-radius: 8px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "cv11";
+}
+
+@utility safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 12px);
+}
+
+@utility hairline {
+  border-color: var(--zg-line);
+  border-width: 1px;
+}
+
+/* Skeleton-Schimmer – bei reduzierter Bewegung statisch */
+@keyframes zg-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+@utility skeleton {
+  background: linear-gradient(90deg, var(--zg-surface-2) 0%, var(--zg-surface-3) 50%, var(--zg-surface-2) 100%);
+  background-size: 200% 100%;
+  animation: zg-shimmer 1.6s var(--ease-spring) infinite;
+}
+
+@keyframes zg-pulse-dot {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

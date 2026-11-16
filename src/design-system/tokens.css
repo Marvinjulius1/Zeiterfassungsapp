@@ -1,0 +1,57 @@
+/* =============================================================================
+   Zeitgeist Design-Tokens
+   Fast nur Schwarz/Weiß/Grau. Akzente ausschließlich für Status:
+   Grün = eingecheckt · Orange = Pause · Rot = Verstoß/Warnung
+   Alle Text-Paarungen erfüllen mindestens WCAG AA (4.5:1) auf --zg-bg und --zg-surface.
+   ============================================================================= */
+
+:root,
+[data-theme="dark"] {
+  --zg-bg: #000000;
+  --zg-surface: #0c0c0d;
+  --zg-surface-2: #161618;
+  --zg-surface-3: #212124;
+  --zg-line: rgba(255, 255, 255, 0.08);
+  --zg-line-strong: rgba(255, 255, 255, 0.16);
+
+  --zg-fg: #ffffff;            /* 21:1   */
+  --zg-fg-2: #a1a1a8;          /* 8.1:1  */
+  --zg-fg-3: #8a8a92;          /* 6.0:1  */
+  --zg-inverse: #ffffff;
+  --zg-inverse-fg: #000000;
+
+  --zg-ok: #30d158;
+  --zg-pause: #ff9f0a;
+  --zg-alert: #ff453a;
+  --zg-ok-soft: rgba(48, 209, 88, 0.14);
+  --zg-pause-soft: rgba(255, 159, 10, 0.14);
+  --zg-alert-soft: rgba(255, 69, 58, 0.14);
+
+  --zg-ring-track: rgba(255, 255, 255, 0.08);
+  --zg-overlay: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] {
+  --zg-bg: #ffffff;
+  --zg-surface: #f5f5f7;
+  --zg-surface-2: #ececef;
+  --zg-surface-3: #e2e2e6;
+  --zg-line: rgba(0, 0, 0, 0.08);
+  --zg-line-strong: rgba(0, 0, 0, 0.16);
+
+  --zg-fg: #000000;
+  --zg-fg-2: #52525b;          /* 7.7:1 */
+  --zg-fg-3: #6b6b74;          /* 5.3:1 */
+  --zg-inverse: #000000;
+  --zg-inverse-fg: #ffffff;
+
+  --zg-ok: #136c2e;
+  --zg-pause: #964300;
+  --zg-alert: #c9271d;
+  --zg-ok-soft: rgba(19, 108, 46, 0.1);
+  --zg-pause-soft: rgba(150, 67, 0, 0.1);
+  --zg-alert-soft: rgba(201, 39, 29, 0.1);
+
+  --zg-ring-track: rgba(0, 0, 0, 0.07);
+  --zg-overlay: rgba(0, 0, 0, 0.35);
+}
