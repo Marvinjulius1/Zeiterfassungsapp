@@ -35,13 +35,13 @@ export function ListRow(props: Common & { href?: string; onClick?: () => void })
   const { href, onClick, className } = props;
   if (href)
     return (
-      <Link href={href} className={cn(base, "rounded-2xl", className)}>
+      <Link href={href} className={cn(base, className)}>
         <Inner {...props} chevron={props.chevron ?? true} />
       </Link>
     );
   if (onClick)
     return (
-      <button type="button" onClick={onClick} className={cn(base, "rounded-2xl", className)}>
+      <button type="button" onClick={onClick} className={cn(base, className)}>
         <Inner {...props} />
       </button>
     );

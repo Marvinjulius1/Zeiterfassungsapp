@@ -26,8 +26,8 @@ const toneVar: Record<Tone, string> = {
 export interface HoldButtonProps {
   /** Text im Button, z. B. „Einchecken" */
   label: string;
-  /** Hinweis darunter, z. B. „Gedrückt halten" */
-  hint?: string;
+  /** Hinweis darunter, z. B. „Gedrückt halten". `null` blendet ihn aus (z. B. im Ring). */
+  hint?: string | null;
   icon?: React.ReactNode;
   tone?: Tone;
   /** Haltedauer in ms */
@@ -117,7 +117,7 @@ export function HoldButton({
       <motion.button
         type="button"
         disabled={disabled}
-        aria-label={`${label} – ${hint}`}
+        aria-label={`${label} – ${hint ?? "Gedrückt halten"}`}
         aria-describedby={undefined}
         className="relative flex touch-none select-none items-center justify-center rounded-full outline-none disabled:opacity-40"
         style={{ width: size, height: size, scale: ringScale }}
@@ -184,9 +184,11 @@ export function HoldButton({
           )}
         </AnimatePresence>
       </motion.button>
-      <span className="text-sm text-fg-2" aria-live="polite">
-        {done ? "Erledigt" : hint}
-      </span>
+      {hint !== null && (
+        <span className="text-sm text-fg-2" aria-live="polite">
+          {done ? "Erledigt" : hint}
+        </span>
+      )}
     </div>
   );
 }

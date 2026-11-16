@@ -6,9 +6,7 @@ import { PageHeader } from "@/components/page-header";
 
 /** Platzhalter für Tabs, die in späteren Phasen gebaut werden. */
 const tabs = {
-  zeiten: { title: "Meine Zeiten", text: "Tag-, Wochen- und Monatsansicht mit Stundenkonto kommen in Phase 3.", phase: 3 },
   plan: { title: "Schichtplan", text: "Deine Schichten, Schichtbörse und Tausch kommen in Phase 7.", phase: 7 },
-  antraege: { title: "Anträge", text: "Urlaub, Krankmeldung und Korrekturen kommen in Phase 3 und 7.", phase: 7 },
 } as const;
 
 type Tab = keyof typeof tabs;

@@ -170,6 +170,25 @@ begin
     from public.memberships m, public.absence_types t
    where m.email = 'mehmet@zeitgeist.demo' and t.org_id = v_org and t.key = 'vacation';
 
+  -- Veröffentlichte Schichten für die nächsten 14 Tage (inkl. heute) + 2 offene Schichten
+  insert into public.shifts (org_id, location_id, membership_id, starts_at, ends_at, break_minutes, status)
+  select v_org, m.location_id, m.id,
+         (dd.sd + time '08:00') at time zone 'Europe/Berlin',
+         (dd.sd + time '08:00' + make_interval(mins => t.mins + case when t.mins > 360 then 30 else 0 end)) at time zone 'Europe/Berlin',
+         case when t.mins > 360 then 30 else 0 end,
+         'published'
+    from public.memberships m
+    join public.employment_contracts c on c.membership_id = m.id
+    cross join lateral generate_series(v_today, v_today + 13, interval '1 day') g(day)
+    cross join lateral (select g.day::date as sd) dd
+    cross join lateral (select coalesce((c.daily_targets ->> extract(isodow from dd.sd)::text)::int, 0) as mins) t
+   where m.org_id = v_org and t.mins > 0
+     and not (extract(isodow from dd.sd)::int = any (c.school_days));
+
+  insert into public.shifts (org_id, location_id, membership_id, starts_at, ends_at, break_minutes, position, status) values
+    (v_org, v_koeln, null, ((v_today + 5) + time '10:00') at time zone 'Europe/Berlin', ((v_today + 5) + time '16:00') at time zone 'Europe/Berlin', 0, 'Service', 'published'),
+    (v_org, v_hh,    null, ((v_today + 6) + time '07:00') at time zone 'Europe/Berlin', ((v_today + 6) + time '15:30') at time zone 'Europe/Berlin', 30, 'Lager', 'published');
+
   -- Vormonat abgeschlossen & gesperrt
   insert into public.month_closings (membership_id, month, employee_confirmed_at, locked_at)
   select m.id, date_trunc('month', v_today - interval '1 month')::date, now() - interval '10 days', now() - interval '8 days'

@@ -889,6 +889,35 @@ isOneToOne: false
               "expires_at": string,"membership_id": string,"token": string
             }[]
                            },
+"stamp":
+{ Args: { "p_event_id": string,"p_geo_accuracy"?: number,"p_geo_lat"?: number,"p_geo_lng"?: number,"p_kind": Database["public"]['Enums']["time_event_kind"],"p_membership_id": string,"p_note"?: string,"p_occurred_at"?: string,"p_offline"?: boolean,"p_project_id"?: string,"p_source"?: Database["public"]['Enums']["time_event_source"] }; Returns: {
+              "created_by": string | null,
+"geo_accuracy_m": number | null,
+"geo_lat": number | null,
+"geo_lng": number | null,
+"id": string,
+"kind": Database["public"]['Enums']["time_event_kind"],
+"membership_id": string,
+"note": string | null,
+"occurred_at": string,
+"org_id": string,
+"project_id": string | null,
+"received_at": string,
+"source": Database["public"]['Enums']["time_event_source"],
+"supersedes_id": string | null,
+"terminal_id": string | null,
+"void_reason": string | null,
+"voided_at": string | null,
+"voided_by": string | null,
+"was_offline": boolean,
+"work_date": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "time_events"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "verify_audit_chain":
 { Args: { "p_org": string }; Returns: number
                            }

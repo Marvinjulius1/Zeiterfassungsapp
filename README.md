@@ -3,7 +3,7 @@
 Zeiterfassung, die Spaß macht – für Unternehmen in Deutschland.
 Mitarbeiter-App (mobile first), Verwaltung (Desktop/Tablet) und Terminal-Modus in einer Next.js-App mit Supabase.
 
-> Stand: **Phase 2 – Fundament** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
+> Stand: **Phase 3 – Mitarbeiter-App** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
 
 ---
 
@@ -60,6 +60,17 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 
 ## Was du ausprobieren kannst
 
+**Mitarbeiter-App** (z. B. als Marvin, am besten in der Handy-Ansicht der Browser-Entwicklertools):
+
+- **Heute:** großen Button gedrückt halten → eingecheckt, Live-Uhr läuft, Ring füllt sich
+- „Pause starten" → orange Pausen-Uhr; „Weiter" gedrückt halten → zurück an die Arbeit
+- Hinweise erscheinen automatisch, z. B. „Gesetzliche Pause fällig in 12 Min." (§ 4 ArbZG) oder für Noah (17) schon nach 4,5 h
+- **Offline:** In den DevTools „Offline" wählen und stempeln → „1 Buchung wartet" → wieder online → wird automatisch synchronisiert
+- **Zeiten:** Stundenkonto, Woche als Chart, Monat als Liste, Tagesdetail mit Zeitstrahl → „Korrektur beantragen"
+- **Anträge:** Status deiner Korrekturen
+
+**Allgemein:**
+
 - `/` – Startseite mit Live-Uhr
 - `/design` – **Komponenten-Showcase**: alle Bausteine, Hell/Dunkel, Hold-to-check-in
 - `/login` → Mitarbeiter landen in `/app`, Owner/Admin/Teamleiter in `/admin`
@@ -107,12 +118,20 @@ supabase/
 - Jede Änderung landet automatisch im **Audit-Log** mit SHA-256-Hash-Kette (`verify_audit_chain()`).
 - Gesperrte Monate lassen sich nur über protokollierte Korrekturen ändern.
 - Stempel-Geheimnisse (PIN, QR-Secret, RFID) liegen in eigenen Tabellen ohne Lese-Policy.
+- Gestempelt wird nur über `public.stamp()`: Online zählt immer die **Serverzeit** (kein Zurückdatieren). Offline-Buchungen behalten die Gerätezeit, höchstens 72 h alt, und werden als `was_offline` markiert. Jede Buchung hat eine Client-UUID, deshalb legt ein doppelter Sync nichts doppelt an.
+- `work_days` wird bei jeder Buchung automatisch per Trigger neu berechnet.
 
 **Bewusst getroffene Entscheidungen**
 
 - Next.js 16 mit *Cache Components*: Session-abhängige Inhalte stehen hinter `<Suspense>` und zeigen Skeletons.
 - Middleware heißt in Next 16 `proxy.ts`.
 - Haptik nutzt die Vibration API – auf iPhones (Safari) gibt es sie nicht, dort bleibt es beim visuellen Feedback.
+
+## Bekannte Grenzen (werden in späteren Phasen gelöst)
+
+- **Stundenkonto:** Es zählt nur Tage mit Buchungen. Urlaub, Krankheit und Feiertage fließen ab Phase 7 ein, Rundung und automatischer Pausenabzug ab Phase 4.
+- **Korrekturanträge:** Sie werden gespeichert, Freigabe und Übernahme folgen mit der Verwaltung in Phase 5.
+- **Offline:** Der Puffer greift, solange die App geöffnet ist. Das Öffnen der App ganz ohne Netz (Service Worker) folgt in Phase 9.
 
 ## Produktion (später)
 

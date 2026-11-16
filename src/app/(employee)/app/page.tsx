@@ -1,41 +1,57 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Card } from "@/design-system/components/card";
-import { EmptyState } from "@/design-system/components/empty-state";
 import { Skeleton } from "@/design-system/components/skeleton";
-import { StatusPill } from "@/design-system/components/status-pill";
+import { TodayView } from "@/features/stamping/components/today-view";
+import { getTodayData } from "@/features/stamping/queries";
 import { requireMember } from "@/lib/auth/session";
 import { firstName, greeting } from "@/lib/greeting";
 
 export const metadata: Metadata = { title: "Heute" };
 
-async function Greeting() {
+async function Today() {
   const viewer = await requireMember();
+  const data = await getTodayData(viewer.active.id);
   return (
-    <header className="flex items-start justify-between gap-4">
-      <div>
+    <>
+      <header>
         <p className="text-sm font-medium text-fg-2">{viewer.active.orgName}</p>
-        <h1 className="mt-1 text-[32px] font-semibold leading-tight tracking-[-0.03em]">
+        <h1 className="mt-1 text-[28px] font-semibold leading-tight tracking-[-0.03em]">
           {greeting()}, {firstName(viewer.active.displayName)}
         </h1>
+      </header>
+      <TodayView
+        membershipId={viewer.active.id}
+        workDate={data.workDate}
+        initialEvents={data.events}
+        targetMinutes={data.targetMinutes}
+        isMinor={data.isMinor}
+        weekMinutesBefore={data.weekMinutesBefore}
+        nextShift={data.nextShift}
+      />
+    </>
+  );
+}
+
+function TodaySkeleton() {
+  return (
+    <div className="space-y-8" aria-busy aria-label="Wird geladen">
+      <div className="space-y-3">
+        <Skeleton className="h-4 w-32 rounded-full" />
+        <Skeleton className="h-8 w-56 rounded-full" />
       </div>
-      <StatusPill status="checked_out" />
-    </header>
+      <Skeleton className="h-8 w-48 rounded-full" />
+      <Skeleton className="h-24 w-72" />
+      <Skeleton className="mx-auto h-[292px] w-[292px] rounded-full" />
+    </div>
   );
 }
 
 export default function TodayPage() {
   return (
-    <div className="space-y-8">
-      <Suspense fallback={<Skeleton className="h-20 w-64" />}>
-        <Greeting />
+    <div className="space-y-6">
+      <Suspense fallback={<TodaySkeleton />}>
+        <Today />
       </Suspense>
-      <Card className="p-0">
-        <EmptyState
-          title="Hier tickt bald deine Uhr."
-          description="Live-Uhr, Hold-to-check-in und Pausen kommen in Phase 3. Fundament, Login und Rollen stehen."
-        />
-      </Card>
     </div>
   );
 }

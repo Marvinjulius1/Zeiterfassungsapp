@@ -30,7 +30,7 @@ export function BigNumber({
   return (
     <div className={cn("flex flex-col", className)}>
       {label && <span className="mb-2 text-sm font-medium text-fg-2">{label}</span>}
-      <span className={cn("font-semibold text-fg", sizes[size])}>
+      <span className={cn("flex font-semibold leading-none text-fg", sizes[size])}>
         {rolling ? (
           <RollingNumber value={value} aria-label={ariaLabel} />
         ) : (
