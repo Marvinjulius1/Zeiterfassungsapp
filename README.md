@@ -139,6 +139,55 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 - Mit einer neuen E-Mail anmelden → `/onboarding` (Firma in 3 Schritten anlegen)
 - Supabase Studio (Datenbank ansehen): http://127.0.0.1:54323
 
+## Native App (iPhone & Android)
+
+Zeitgeist gibt es als echte App zum Herunterladen, gebaut mit [Capacitor](https://capacitorjs.com). Die nativen Projekte liegen in `ios/` (Xcode) und `android/` (Android Studio). Die Oberfläche kommt vom Zeitgeist-Server, lokal von deinem Mac und später von der Online-Adresse. So sehen alle Mitarbeitenden immer denselben Stand.
+
+**Was die App nativ kann:** echte Haptik (Taptic Engine), Statusleiste passend zu Hell/Dunkel, eigener Startbildschirm und Icon, Kamera (QR-Scan, Krankmeldung) und Standort mit iPhone-Berechtigungsdialog, Android-Zurück-Taste, PDF/CSV über das Teilen-Menü, frische Daten beim Zurückkehren aus dem Hintergrund und eine eigene „Keine Verbindung“-Seite.
+
+### iPhone-Simulator (Mac mit Xcode)
+
+1. Zeitgeist wie oben starten (`pnpm db:start`, `pnpm db:reset`, `pnpm dev`).
+2. In einem zweiten Terminal:
+
+```bash
+pnpm app:ios
+```
+
+3. Xcode öffnet sich. Oben ein iPhone als Ziel wählen (z. B. „iPhone 16“) und auf ▶ klicken.
+
+Beim ersten Öffnen lädt Xcode die Capacitor-Pakete (Swift Package Manager), das dauert einen Moment.
+
+### Auf deinem eigenen iPhone (kostenlose Apple-ID)
+
+Das iPhone muss den Zeitgeist-Server erreichen. `localhost` ist auf dem Handy das Handy selbst, deshalb geht das erst mit der Online-Version (siehe „Produktion“):
+
+```bash
+CAP_SERVER_URL=https://deine-zeitgeist-adresse.de pnpm app:ios
+```
+
+In Xcode: **App** → **Signing & Capabilities** → **Team**: deine Apple-ID hinzufügen. Dann das iPhone per Kabel verbinden, als Ziel wählen und ▶ drücken. Beim ersten Mal auf dem iPhone unter Einstellungen → Allgemein → VPN & Geräteverwaltung dem Entwickler vertrauen. Mit kostenloser Apple-ID läuft die App 7 Tage, danach einfach erneut aus Xcode starten.
+
+### Android-Emulator (Android Studio)
+
+```bash
+pnpm app:android
+```
+
+Android Studio öffnet sich; einen Emulator starten und ▶ drücken. Damit der Emulator deinen Mac unter `localhost` erreicht, vorher einmal ausführen (bei laufendem Emulator):
+
+```bash
+adb reverse tcp:3000 tcp:3000 && adb reverse tcp:54321 tcp:54321
+```
+
+### Veröffentlichen
+
+- **App-Kennung:** `de.zeitgeist.app` in `capacitor.config.ts`, `android/app/build.gradle` und in Xcode (Bundle Identifier) auf eine eigene Domain ändern, *bevor* die App das erste Mal veröffentlicht wird.
+- **App Store / TestFlight:** Apple-Developer-Konto (99 €/Jahr). In Xcode **Product → Archive** und an App Store Connect hochladen. Mit TestFlight können Mitarbeitende die App ohne App Store installieren.
+- **Google Play:** Entwicklerkonto (einmalig 25 $), in Android Studio **Build → Generate Signed App Bundle**.
+- **Push in der App** braucht bei Apple einen APNs-Schlüssel (Developer-Konto) und bei Android ein Firebase-Projekt (`google-services.json` in `android/app/`). Das Plugin ist bereits eingebunden. Bis dahin zeigt die Glocke alle Benachrichtigungen live in der App.
+- **Hinweis zum App-Review:** Apple lehnt reine „Webseiten in einer Hülle“ ab. Zeitgeist nutzt deshalb native Funktionen (Haptik, Kamera, Standort, Teilen, später Push). Beim Einreichen in den Review-Notizen Demo-Zugangsdaten angeben.
+
 ## Befehle
 
 | Befehl | Zweck |
@@ -152,6 +201,8 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 | `pnpm db:types` | TypeScript-Typen aus dem Schema erzeugen |
 | `pnpm check` | Typecheck + Lint + alle Tests |
 | `pnpm db:stop` | Supabase-Container stoppen |
+| `pnpm app:ios` / `pnpm app:android` | native App synchronisieren und in Xcode / Android Studio öffnen |
+| `pnpm app:sync` | Änderungen an Plugins/Konfiguration in die nativen Projekte übernehmen |
 
 ## Architektur in Kürze
 
@@ -198,6 +249,7 @@ supabase/
 
 ## Bekannte Grenzen
 
+- **Native App:** Die App braucht Netz zum Zeitgeist-Server; ohne Verbindung zeigt sie eine eigene Hinweisseite. Offline gestempelt wird weiterhin gepuffert, solange die App geöffnet ist.
 - **Sprache:** Die Oberfläche ist nur auf Deutsch, passend zum deutschen Arbeitsrecht. Eine englische Version wäre ein eigenes Projekt.
 - **DATEV:** Export als LODAS-Importdatei, keine Direktschnittstelle (dafür braucht es eine DATEV-Partnerschaft). „Lohn und Gehalt“ (LuG) wird noch nicht unterstützt.
 - **NFC** ist bewusst nicht umgesetzt: Statische NFC-Tags lassen sich kopieren, und Web NFC gibt es nur auf Android. RFID am Terminal deckt den Anwendungsfall sicherer ab.

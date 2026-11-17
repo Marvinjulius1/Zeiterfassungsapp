@@ -7,6 +7,7 @@ import { AlertTriangle, ChevronLeft, ChevronRight, FileDown, FileSpreadsheet, Fi
 import { Badge } from "@/design-system/components/badge";
 import { Button } from "@/design-system/components/button";
 import { buttonVariants } from "@/design-system/components/button-variants";
+import { DownloadLink } from "@/components/download-link";
 import { Card } from "@/design-system/components/card";
 import { Input } from "@/design-system/components/input";
 import { Sheet } from "@/design-system/components/sheet";
@@ -94,17 +95,17 @@ export function ReportsView({
           </Button>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <a className={buttonVariants({ variant: "secondary", size: "sm" })} href={exportHref("csv")} download>
+          <DownloadLink className={buttonVariants({ variant: "secondary", size: "sm" })} href={exportHref("csv")}>
             <FileDown className="h-4 w-4" aria-hidden /> CSV
-          </a>
-          <a className={buttonVariants({ variant: "secondary", size: "sm" })} href={exportHref("xlsx")} download>
+          </DownloadLink>
+          <DownloadLink className={buttonVariants({ variant: "secondary", size: "sm" })} href={exportHref("xlsx")}>
             <FileSpreadsheet className="h-4 w-4" aria-hidden /> Excel
-          </a>
+          </DownloadLink>
           {canAdmin && (
             <>
-              <a className={buttonVariants({ variant: "secondary", size: "sm" })} href={exportHref("datev")} download>
+              <DownloadLink className={buttonVariants({ variant: "secondary", size: "sm" })} href={exportHref("datev")}>
                 <FileText className="h-4 w-4" aria-hidden /> DATEV LODAS
-              </a>
+              </DownloadLink>
               <DatevSettings settings={payroll} />
             </>
           )}
@@ -204,15 +205,14 @@ export function ReportsView({
                 </td>
                 <td className="px-4 py-3">
                   <span className="flex justify-end gap-1">
-                    <a
+                    <DownloadLink
                       className={buttonVariants({ variant: "ghost", size: "icon" })}
                       href={`/api/reports/timesheet?monat=${ym}&person=${r.membershipId}`}
-                      download
                       aria-label={`Stundenzettel ${r.name} als PDF`}
                       title="Stundenzettel (PDF)"
                     >
                       <FileText className="h-4 w-4" aria-hidden />
-                    </a>
+                    </DownloadLink>
                     {canAdmin && r.status === "locked" && (
                       <UnlockButton month={month} membershipId={r.membershipId} name={r.name} onDone={() => applyStatus([r.membershipId], (x) => (x.confirmed ? "confirmed" : "open"))} />
                     )}

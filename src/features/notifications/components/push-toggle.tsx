@@ -5,10 +5,11 @@ import { BellRing } from "lucide-react";
 import { Button } from "@/design-system/components/button";
 import { toast } from "@/design-system/components/toaster";
 import { Toggle } from "@/design-system/components/toggle";
+import { isNativeApp } from "@/lib/native/platform";
 import { ensureServiceWorker } from "@/lib/pwa/service-worker-registration";
 import { removePushSubscription, savePushSubscription, sendTestPush } from "../actions";
 
-type State = "loading" | "unsupported" | "ios-install" | "denied" | "off" | "on";
+type State = "loading" | "unsupported" | "ios-install" | "native" | "denied" | "off" | "on";
 
 function base64UrlToBytes(b64: string) {
   const pad = "=".repeat((4 - (b64.length % 4)) % 4);
@@ -25,6 +26,8 @@ export function PushToggle({ showTest = false }: { showTest?: boolean }) {
 
   useEffect(() => {
     (async () => {
+      // Native App: Push läuft dort über Apple/Google (APNs/FCM), nicht über den Browser
+      if (isNativeApp()) return setState("native");
       const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
       if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window) || !VAPID) {
@@ -73,7 +76,9 @@ export function PushToggle({ showTest = false }: { showTest?: boolean }) {
     });
 
   const hint =
-    state === "ios-install"
+    state === "native"
+      ? "Push-Nachrichten in der App werden aktiviert, sobald das Apple-Developer-Konto bzw. Firebase eingerichtet ist. Bis dahin zeigt die Glocke alles live."
+      : state === "ios-install"
       ? "Auf dem iPhone geht Push nur, wenn Zeitgeist zum Home-Bildschirm hinzugefügt ist (Teilen → „Zum Home-Bildschirm“)."
       : state === "denied"
         ? "Benachrichtigungen sind im Browser blockiert. Du kannst sie in den Website-Einstellungen wieder erlauben."

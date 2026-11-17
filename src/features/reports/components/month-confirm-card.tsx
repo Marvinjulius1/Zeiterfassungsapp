@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Check, FileText, Lock } from "lucide-react";
 import { Button } from "@/design-system/components/button";
 import { buttonVariants } from "@/design-system/components/button-variants";
+import { DownloadLink } from "@/components/download-link";
 import { Card } from "@/design-system/components/card";
 import { toast } from "@/design-system/components/toaster";
 import { haptic } from "@/lib/haptics";
@@ -83,9 +84,9 @@ export function MonthConfirmCard({
             <Check className="h-4 w-4" aria-hidden /> Monat bestätigen
           </Button>
         )}
-        <a className={buttonVariants({ variant: "secondary" })} href={`/api/reports/timesheet?monat=${month.slice(0, 7)}`} download>
+        <DownloadLink className={buttonVariants({ variant: "secondary" })} href={`/api/reports/timesheet?monat=${month.slice(0, 7)}`}>
           <FileText className="h-4 w-4" aria-hidden /> Stundenzettel (PDF)
-        </a>
+        </DownloadLink>
       </div>
     </Card>
   );
