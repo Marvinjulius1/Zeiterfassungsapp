@@ -9,6 +9,7 @@ import { isOrgAdmin } from "@/lib/auth/roles";
 import { requireAdminArea } from "@/lib/auth/session";
 import { STATE_CODES } from "@/lib/germany";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { schedulePush } from "@/lib/push/schedule";
 import { createClient } from "@/lib/supabase/server";
 
 export type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };
@@ -43,6 +44,7 @@ export async function reviewCorrection(id: string, approve: boolean, note?: stri
   const { error } = await supabase.rpc("review_correction", { p_request: id, p_approve: approve, p_note: note });
   if (error) return dbError(error, "Freigabe fehlgeschlagen.");
   if (approve && req) await reevaluate(req.membership_id, req.work_date);
+  schedulePush();
   revalidatePath("/admin", "layout");
   return { ok: true };
 }
@@ -52,6 +54,7 @@ export async function reviewAbsence(id: string, approve: boolean, note?: string)
   const supabase = await createClient();
   const { error } = await supabase.rpc("review_absence", { p_absence: id, p_approve: approve, p_note: note });
   if (error) return dbError(error, "Freigabe fehlgeschlagen.");
+  schedulePush();
   revalidatePath("/admin", "layout");
   return { ok: true };
 }

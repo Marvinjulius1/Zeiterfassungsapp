@@ -92,13 +92,17 @@ export function WeekPlanner({ plan }: { plan: WeekPlan }) {
       {/* Raster */}
       <div className={cn("overflow-x-auto rounded-[24px] border border-line bg-surface transition-opacity", pending && "opacity-60")}>
         <div className="grid min-w-[980px] grid-cols-[220px_repeat(7,minmax(0,1fr))]" role="grid" aria-label="Schichtplan">
-          <div className="border-b border-line p-3" />
-          {plan.days.map((d) => (
-            <div key={d.date} role="columnheader" className={cn("border-b border-l border-line p-3", d.date === today && "bg-surface-2")}>
-              <p className="text-sm font-semibold">{formatWeekdayShort(d.date)} {Number(d.date.slice(8))}.</p>
-              {d.holiday && <p className="truncate text-xs text-pause" title={d.holiday}>{d.holiday}</p>}
+          <div role="row" className="contents">
+            <div role="columnheader" className="border-b border-line p-3">
+              <span className="sr-only">Person</span>
             </div>
-          ))}
+            {plan.days.map((d) => (
+              <div key={d.date} role="columnheader" className={cn("border-b border-l border-line p-3", d.date === today && "bg-surface-2")}>
+                <p className="text-sm font-semibold">{formatWeekdayShort(d.date)} {Number(d.date.slice(8))}.</p>
+                {d.holiday && <p className="truncate text-xs text-pause" title={d.holiday}>{d.holiday}</p>}
+              </div>
+            ))}
+          </div>
 
           {rows.map((r) => (
             <Row key={r.id}>
@@ -205,7 +209,7 @@ function ShiftChip({ shift, onOpen }: { shift: PlanShift; onOpen: () => void }) 
       }}
       onClick={onOpen}
       title={shift.conflicts.map((c) => `• ${c.message}`).join("\n") || undefined}
-      aria-label={`Schicht ${formatTime(shift.startsAt)} bis ${formatTime(shift.endsAt)}${shift.status === "draft" ? ", Entwurf" : ""}${bad.length ? `, ${bad.length} Konflikt${bad.length === 1 ? "" : "e"}` : ""}`}
+      aria-label={`${formatTime(shift.startsAt)}–${formatTime(shift.endsAt)}${shift.position ? ` ${shift.position}` : ""}, Schicht${shift.status === "draft" ? ", Entwurf" : ""}${bad.length ? `, ${bad.length} Konflikt${bad.length === 1 ? "" : "e"}` : ""}`}
       className={cn(
         "block w-full cursor-grab rounded-[12px] border px-2 py-1.5 text-left transition-transform active:scale-[0.98] active:cursor-grabbing",
         shift.status === "draft" ? "border-dashed border-line-strong bg-surface" : "border-transparent bg-surface-3",
@@ -217,7 +221,7 @@ function ShiftChip({ shift, onOpen }: { shift: PlanShift; onOpen: () => void }) 
         {(severe || bad.length > 0) && <AlertTriangle className={cn("h-3 w-3 shrink-0", severe ? "text-alert" : "text-pause")} aria-hidden />}
         {formatTime(shift.startsAt)}–{formatTime(shift.endsAt)}
       </span>
-      {shift.position && <span className="block truncate text-[11px] text-fg-2">{shift.position}</span>}
+      {shift.position && <span className="block truncate text-[11px] text-fg-2"> {shift.position}</span>}
     </button>
   );
 }

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { BottomBar, BottomBarTabs } from "@/components/shell/bottom-bar";
 import { PageTransition } from "@/components/shell/page-transition";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { Skeleton } from "@/design-system/components/skeleton";
 import { requireMember } from "@/lib/auth/session";
 
@@ -25,10 +26,13 @@ export default function EmployeeLayout({ children }: LayoutProps<"/app">) {
     <>
       <main
         id="main"
-        className="mx-auto w-full max-w-lg px-5 pb-32 pt-[max(env(safe-area-inset-top),24px)]"
+        className="relative mx-auto w-full max-w-lg px-5 pb-32 pt-[max(env(safe-area-inset-top),24px)]"
       >
         <Suspense fallback={<AppSkeleton />}>
           <Guard>
+            <div className="absolute right-3 top-[max(env(safe-area-inset-top),24px)] z-20">
+              <NotificationBell />
+            </div>
             <PageTransition>{children}</PageTransition>
           </Guard>
         </Suspense>

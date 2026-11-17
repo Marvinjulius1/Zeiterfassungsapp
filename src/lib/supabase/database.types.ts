@@ -415,14 +415,14 @@ isOneToOne: false
                   ]
                 },"notifications": {
                   Row: {
-                    "body": string | null,"created_at": string,"id": string,"kind": string,"org_id": string | null,"payload": NonNullable<Json>,"read_at": string | null,"title": string,"user_id": string
+                    "body": string | null,"created_at": string,"id": string,"kind": string,"org_id": string | null,"payload": NonNullable<Json>,"pushed_at": string | null,"read_at": string | null,"title": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "body"?: string | null,"created_at"?: string,"id"?: string,"kind": string,"org_id"?: string | null,"payload"?: NonNullable<Json>,"read_at"?: string | null,"title": string,"user_id": string
+                    "body"?: string | null,"created_at"?: string,"id"?: string,"kind": string,"org_id"?: string | null,"payload"?: NonNullable<Json>,"pushed_at"?: string | null,"read_at"?: string | null,"title": string,"user_id": string
                   }
                   Update: {
-                    "body"?: string | null,"created_at"?: string,"id"?: string,"kind"?: string,"org_id"?: string | null,"payload"?: NonNullable<Json>,"read_at"?: string | null,"title"?: string,"user_id"?: string
+                    "body"?: string | null,"created_at"?: string,"id"?: string,"kind"?: string,"org_id"?: string | null,"payload"?: NonNullable<Json>,"pushed_at"?: string | null,"read_at"?: string | null,"title"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -929,6 +929,9 @@ isOneToOne: false
 "lock_months":
 { Args: { "p_items": Json,"p_month": string }; Returns: number
                            },
+"mark_notifications_read":
+{ Args: { "p_ids"?: (string)[] }; Returns: number
+                           },
 "member_stamp_state":
 { Args: { "p_membership_id": string }; Returns: string
                            },
@@ -983,6 +986,9 @@ isOneToOne: false
                            },
 "review_shift_swap":
 { Args: { "p_approve": boolean,"p_request": string }; Returns: undefined
+                           },
+"save_push_subscription":
+{ Args: { "p_auth": string,"p_endpoint": string,"p_p256dh": string,"p_user_agent"?: string }; Returns: undefined
                            },
 "self_apply_correction":
 { Args: { "p_request": string }; Returns: undefined

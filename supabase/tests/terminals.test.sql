@@ -5,7 +5,9 @@ select plan(8);
 
 -- Unabhängig vom aktuellen Datenstand: Marvin ist zu Beginn ausgecheckt (wird am Ende zurückgerollt)
 insert into public.time_events (id, org_id, membership_id, kind, occurred_at, work_date, source)
-select gen_random_uuid(), m.org_id, m.id, 'check_out', now() - interval '1 minute',
+select gen_random_uuid(), m.org_id, m.id, 'check_out',
+       greatest(now() - interval '1 minute',
+                (select occurred_at + interval '1 second' from public.time_events where membership_id = m.id and voided_at is null order by occurred_at desc limit 1)),
        (select work_date from public.time_events where membership_id = m.id and voided_at is null order by occurred_at desc limit 1), 'admin'
   from public.memberships m
  where m.email = 'marvin@zeitgeist.demo' and public.member_stamp_state(m.id) <> 'out';

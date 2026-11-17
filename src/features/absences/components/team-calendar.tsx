@@ -103,7 +103,7 @@ export function TeamCalendarView({ data, canCreate }: { data: Data; canCreate: b
                 >
                   <span className="block">{["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"][d.weekday - 1]}</span>
                   <span className={cn("tabular", d.date === today && "rounded-full bg-inverse px-1.5 text-inverse-fg")}>{Number(d.date.slice(8))}</span>
-                  {d.holiday && <span className="mx-auto mt-0.5 block h-1 w-1 rounded-full bg-pause" aria-label={d.holiday} />}
+                  {d.holiday && <span className="mx-auto mt-0.5 block h-1 w-1 rounded-full bg-pause" role="img" aria-label={d.holiday} />}
                 </th>
               ))}
             </tr>

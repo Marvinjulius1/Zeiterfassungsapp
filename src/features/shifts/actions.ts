@@ -5,6 +5,7 @@ import { TZDate } from "@date-fns/tz";
 import { z } from "zod";
 import { addDaysKey, dateKeyOf, localTime } from "@/compliance";
 import { requireAdminArea, requireMember } from "@/lib/auth/session";
+import { schedulePush } from "@/lib/push/schedule";
 import { createClient } from "@/lib/supabase/server";
 
 type Result<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };
@@ -103,6 +104,7 @@ export async function publishWeek(monday: string, locationId: string | null): Pr
     p_location: locationId ?? undefined,
   });
   if (error) return fail(error.code === "42501" ? "Keine Berechtigung." : "Veröffentlichen fehlgeschlagen.");
+  schedulePush();
   revalidatePath("/admin/schichtplan");
   return { ok: true, data: { count: data ?? 0 } };
 }
@@ -142,6 +144,7 @@ export async function copyPreviousWeek(monday: string, locationId: string | null
 async function rpcResult(fn: () => PromiseLike<{ error: { code?: string; message: string } | null }>, okPath = "/app/plan"): Promise<Result> {
   const { error } = await fn();
   if (error) return fail(error.code === "P0001" || error.code === "42501" ? error.message : "Fehlgeschlagen.");
+  schedulePush();
   revalidatePath(okPath);
   return { ok: true };
 }

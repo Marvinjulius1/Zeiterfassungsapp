@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LogOut } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { PushToggle } from "@/features/notifications/components/push-toggle";
 import { Avatar } from "@/design-system/components/avatar";
 import { Badge } from "@/design-system/components/badge";
 import { Button } from "@/design-system/components/button";
@@ -58,6 +59,11 @@ async function ProfileContent() {
       </Card>
 
       <StampingSettings hasPin={!!cred?.pin_hash} geoConsent={(consent?.length ?? 0) > 0} />
+
+      <Card>
+        <h2 className="mb-4 text-[17px] font-semibold">Benachrichtigungen</h2>
+        <PushToggle showTest />
+      </Card>
     </>
   );
 }

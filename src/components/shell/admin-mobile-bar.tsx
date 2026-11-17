@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/design-system/components/button";
 import { Sheet } from "@/design-system/components/sheet";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { AdminNav } from "./admin-nav";
 
 /** Kompakte Kopfzeile + Menü-Sheet für die Verwaltung auf kleinen Screens. */
@@ -13,6 +14,8 @@ export function AdminMobileBar() {
   return (
     <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-[color-mix(in_srgb,var(--zg-bg)_85%,transparent)] px-4 backdrop-blur-xl lg:hidden">
       <Logo size={19} />
+      <div className="flex items-center gap-1">
+      <NotificationBell />
       <Sheet
         open={open}
         onOpenChange={setOpen}
@@ -25,6 +28,7 @@ export function AdminMobileBar() {
       >
         <AdminNav onNavigate={() => setOpen(false)} />
       </Sheet>
+      </div>
     </div>
   );
 }

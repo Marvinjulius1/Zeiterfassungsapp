@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Mail } from "lucide-react";
@@ -11,6 +11,7 @@ import { spring } from "@/design-system/motion";
 import { haptic } from "@/lib/haptics";
 import { createClient } from "@/lib/supabase/client";
 import { safeNext } from "@/lib/auth/safe-next";
+import { clearOfflinePages } from "@/lib/pwa/service-worker-registration";
 import { DemoLogins } from "./demo-logins";
 
 type Step = "email" | "code";
@@ -18,6 +19,8 @@ type Step = "email" | "code";
 export function LoginFlow({ demoMode }: { demoMode: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
+  // Wer auf dem Login landet, ist abgemeldet → offline gespeicherte Seiten entfernen
+  useEffect(() => clearOfflinePages(), []);
   const next = safeNext(params.get("next"));
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");

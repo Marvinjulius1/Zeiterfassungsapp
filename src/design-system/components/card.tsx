@@ -24,7 +24,7 @@ export function CardHeader({
   return (
     <div className={cn("mb-4 flex items-start justify-between gap-4", className)}>
       <div className="min-w-0">
-        <h3 className="text-[15px] font-semibold text-fg">{title}</h3>
+        <h2 className="text-[15px] font-semibold text-fg">{title}</h2>
         {subtitle && <p className="mt-0.5 text-sm text-fg-2">{subtitle}</p>}
       </div>
       {action}

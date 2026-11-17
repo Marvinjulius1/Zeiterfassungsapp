@@ -45,41 +45,46 @@ export function ProgressRing({
     <div
       className={cn("relative inline-flex items-center justify-center", className)}
       style={{ width: size, height: size }}
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(value * 100)}
-      aria-label={label}
     >
-      <svg width={size} height={size} className="-rotate-90" aria-hidden>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--zg-ring-track)" strokeWidth={stroke} />
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke={toneVar[tone]}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: main, opacity: main === 0 ? 0 : 1 }}
-          transition={t}
-        />
-        {over > 0 && (
+      {/* Fortschritt als eigenes Element: Inhalte (z. B. der Check-in-Button) dürfen nicht im progressbar stecken */}
+      <div
+        className="absolute inset-0"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(value * 100)}
+        aria-label={label}
+      >
+        <svg width={size} height={size} className="-rotate-90" aria-hidden>
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--zg-ring-track)" strokeWidth={stroke} />
           <motion.circle
             cx={size / 2}
             cy={size / 2}
             r={r}
             fill="none"
-            stroke={toneVar[overTone]}
-            strokeWidth={stroke * 0.5}
+            stroke={toneVar[tone]}
+            strokeWidth={stroke}
             strokeLinecap="round"
             initial={{ pathLength: 0 }}
-            animate={{ pathLength: over }}
+            animate={{ pathLength: main, opacity: main === 0 ? 0 : 1 }}
             transition={t}
           />
-        )}
-      </svg>
+          {over > 0 && (
+            <motion.circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke={toneVar[overTone]}
+              strokeWidth={stroke * 0.5}
+              strokeLinecap="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: over }}
+              transition={t}
+            />
+          )}
+        </svg>
+      </div>
       {children && <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>}
     </div>
   );

@@ -3,7 +3,7 @@
 Zeiterfassung, die Spaß macht – für Unternehmen in Deutschland.
 Mitarbeiter-App (mobile first), Verwaltung (Desktop/Tablet) und Terminal-Modus in einer Next.js-App mit Supabase.
 
-> Stand: **Phase 8 – Berichte, Export & Monatsabschluss** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
+> Stand: **Phase 9 – Feinschliff (alle Phasen abgeschlossen)** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
 
 ---
 
@@ -122,6 +122,14 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 
 > **DATEV-Hinweis:** Die Lohnarten-Nummern (100, 200, 300 …) sind Platzhalter. Bitte vor dem ersten echten Import mit eurem Steuerbüro abstimmen. Die Personalnummer muss der in LODAS entsprechen (nur Ziffern, max. 5 Stellen, z. B. „Z-003“ → 3). Erst eine Test-Datei importieren lassen.
 
+**App, Offline & Benachrichtigungen** (Phase 9):
+
+- **Glocke** oben rechts (App) bzw. neben dem Logo (Verwaltung): Genehmigungen, Tauschanfragen und neue Schichtpläne erscheinen **live**, ohne Neuladen. Zum Ausprobieren: als Sophie Saras Urlaub genehmigen, während Sara eingeloggt ist.
+- **Push aufs Handy:** Profil → „Push auf diesem Gerät“ → „Testnachricht senden“. Lokal funktioniert das in Chrome/Edge/Firefox. Auf dem iPhone geht Push nur, wenn Zeitgeist zum Home-Bildschirm hinzugefügt ist (iOS 16.4+).
+- **Installieren:** Im Browser „App installieren“ bzw. auf dem iPhone Teilen → „Zum Home-Bildschirm“.
+- **Offline:** Im Production-Modus (`pnpm build && pnpm start`) startet „Heute“ auch ganz ohne Netz. Offline gestempelt wird gepuffert und automatisch nachgesendet, oben erscheint ein Offline-Hinweis. Beim Abmelden werden offline gespeicherte Seiten vom Gerät gelöscht.
+- Im Entwicklungsmodus (`pnpm dev`) wird absichtlich nichts gecacht, damit Änderungen sofort sichtbar sind.
+
 **Allgemein:**
 
 - `/` – Startseite mit Live-Uhr
@@ -188,13 +196,33 @@ supabase/
 - Middleware heißt in Next 16 `proxy.ts`.
 - Haptik nutzt die Vibration API – auf iPhones (Safari) gibt es sie nicht, dort bleibt es beim visuellen Feedback.
 
-## Bekannte Grenzen (werden in späteren Phasen gelöst)
+## Bekannte Grenzen
 
-- **Benachrichtigungen** werden gespeichert (z. B. „Korrektur genehmigt“). Eine Glocke in der App und Push-Nachrichten kommen in Phase 9.
+- **Sprache:** Die Oberfläche ist nur auf Deutsch, passend zum deutschen Arbeitsrecht. Eine englische Version wäre ein eigenes Projekt.
+- **DATEV:** Export als LODAS-Importdatei, keine Direktschnittstelle (dafür braucht es eine DATEV-Partnerschaft). „Lohn und Gehalt“ (LuG) wird noch nicht unterstützt.
 - **NFC** ist bewusst nicht umgesetzt: Statische NFC-Tags lassen sich kopieren, und Web NFC gibt es nur auf Android. RFID am Terminal deckt den Anwendungsfall sicherer ab.
 - **Einladung per E-Mail** öffnet dein Mailprogramm mit vorbereitetem Text. Ein eigener Mailversand folgt mit der Produktionseinrichtung.
-- **Offline:** Der Puffer greift, solange die App geöffnet ist. Das Öffnen der App ganz ohne Netz (Service Worker) folgt in Phase 9.
+- **Offline** sind nur Seiten verfügbar, die auf dem Gerät schon einmal geöffnet wurden (Mitarbeiter-App und Terminal). Die Verwaltung braucht Netz.
 
-## Produktion (später)
+## Produktion
 
-Supabase-Projekt in **eu-central-1 (Frankfurt)** anlegen, `supabase link` + `supabase db push`, Auth-SMTP konfigurieren, `NEXT_PUBLIC_DEMO_MODE` **nicht** setzen. Details folgen in Phase 9.
+1. **Supabase-Projekt** in der Region **eu-central-1 (Frankfurt)** anlegen (DSGVO: Daten bleiben in der EU). Einen Auftragsverarbeitungsvertrag (AVV) mit Supabase und dem Hoster abschließen.
+2. Datenbank einspielen: `pnpm exec supabase link --project-ref <ref>` und `pnpm exec supabase db push`. **Kein** `seed.sql` in Produktion!
+3. **Auth:** In Supabase → Authentication eigenes SMTP eintragen (z. B. Postmark, Brevo), die Site-URL setzen und die Vorlage aus `supabase/templates/` übernehmen.
+4. **Hosting** (z. B. Vercel, Region Frankfurt `fra1`), dort die Umgebungsvariablen setzen:
+
+   | Variable | Wert |
+   |---|---|
+   | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | aus Supabase → Settings → API |
+   | `SUPABASE_SECRET_KEY` | Secret Key, **nur** serverseitig |
+   | `CRON_SECRET` | langer Zufallswert |
+   | `ZEITGEIST_PEPPER` | ≥ 32 Zeichen Zufall, **nie wieder ändern** |
+   | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | `pnpm dlx web-push generate-vapid-keys` |
+   | `NEXT_PUBLIC_DEMO_MODE` | **nicht setzen** |
+
+5. **Zeitgesteuerte Jobs** mit Header `Authorization: Bearer $CRON_SECRET` einrichten:
+   - `/api/cron/auto-checkout` stündlich
+   - `/api/cron/nightly` täglich nachts
+   - `/api/cron/push` optional alle 5 Minuten
+6. **Erste Firma:** Mit der eigenen E-Mail anmelden → `/onboarding`.
+7. Vor dem Start: Regeln mit Betriebsrat bzw. Datenschutzbeauftragtem abstimmen (§ 87 BetrVG) und DATEV-Lohnarten mit dem Steuerbüro.

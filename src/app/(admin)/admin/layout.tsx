@@ -4,6 +4,7 @@ import { AdminMobileBar } from "@/components/shell/admin-mobile-bar";
 import { AdminNav, AdminNavLinks } from "@/components/shell/admin-nav";
 import { CommandButton, CommandPalette } from "@/components/shell/command-palette";
 import { Avatar } from "@/design-system/components/avatar";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { Skeleton } from "@/design-system/components/skeleton";
 import { ROLE_LABEL } from "@/lib/auth/roles";
 import { requireAdminArea } from "@/lib/auth/session";
@@ -38,8 +39,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[260px_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line px-4 py-6 lg:flex" aria-label="Verwaltung">
-        <div className="px-3.5 pb-6">
+        <div className="flex items-center justify-between pb-4 pl-3.5">
           <Logo size={20} />
+          <NotificationBell />
         </div>
         <div className="pb-4">
           <CommandButton />

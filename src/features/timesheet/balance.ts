@@ -47,6 +47,26 @@ export async function loadMemberCalendar(supabase: Client, membershipId: string,
   };
 }
 
+const PAGE = 1000; // = max_rows der Datenbank-API
+
+/** Alle Tageswerte im Zeitraum – seitenweise, damit auch nach Jahren nichts abgeschnitten wird. */
+async function loadWorkDays(supabase: Client, membershipId: string, from: string, to: string) {
+  const out: { work_date: string; valued_minutes: number; status: string }[] = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await supabase
+      .from("work_days")
+      .select("work_date, valued_minutes, status")
+      .eq("membership_id", membershipId)
+      .gte("work_date", from)
+      .lte("work_date", to)
+      .order("work_date")
+      .range(offset, offset + PAGE - 1);
+    if (error) throw new Error(`Tageswerte konnten nicht geladen werden: ${error.message}`);
+    out.push(...(data ?? []));
+    if (!data || data.length < PAGE) return out;
+  }
+}
+
 export interface BalanceResult {
   minutes: number;
   since: string | null;
@@ -66,10 +86,10 @@ export async function loadBalance(supabase: Client, membershipId: string, to: st
 
   const [cal, days, adjustments] = await Promise.all([
     loadMemberCalendar(supabase, membershipId, from, to),
-    supabase.from("work_days").select("work_date, valued_minutes, status").eq("membership_id", membershipId).gte("work_date", from).lte("work_date", to),
+    loadWorkDays(supabase, membershipId, from, to),
     supabase.from("time_account_adjustments").select("minutes, effective_date").eq("membership_id", membershipId).lte("effective_date", to),
   ]);
-  const valued = new Map((days.data ?? []).filter((d) => d.status !== "open").map((d) => [d.work_date, d.valued_minutes]));
+  const valued = new Map(days.filter((d) => d.status !== "open").map((d) => [d.work_date, d.valued_minutes]));
   const r = computeBalance({
     from,
     to,
