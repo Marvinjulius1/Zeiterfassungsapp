@@ -3,7 +3,7 @@
 Zeiterfassung, die Spaß macht – für Unternehmen in Deutschland.
 Mitarbeiter-App (mobile first), Verwaltung (Desktop/Tablet) und Terminal-Modus in einer Next.js-App mit Supabase.
 
-> Stand: **Phase 5 – Verwaltung** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
+> Stand: **Phase 6 – Terminal-Modus** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
 
 ---
 
@@ -69,6 +69,16 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 - **Zeiten:** Stundenkonto, Woche als Chart, Monat als Liste, Tagesdetail mit Zeitstrahl → „Korrektur beantragen"
 - **Anträge:** Status deiner Korrekturen
 
+**Terminal** (Tablet am Eingang, im Browser einfach ein zweites Fenster):
+
+- http://localhost:3000/terminal öffnen und den Demo-Kopplungscode **111111** (Köln) bzw. **222222** (Hamburg) eingeben. Eigene Codes erzeugst du unter Verwaltung → Standorte.
+- **PIN eingeben:** Marvin `482915`, Lena `731406`, Noah `590327`. Wer ausgecheckt ist, wird eingecheckt; wer da ist, wählt „Pause“ oder „Gehen“.
+- **RFID:** Ein USB-Leser tippt die Chip-Nummer plus Enter. Zum Testen `04A2BC11` schnell eintippen und Enter drücken (Lena).
+- **Handy:** Den wechselnden QR-Code mit der Kamera scannen oder in der App unter Heute → „QR scannen“. Das Tablet begrüßt dich.
+- **Eigener QR:** In der App unter Heute → „Mein QR“, dann am Terminal „Eigenen QR zeigen“.
+- **Offline:** Netz am Tablet trennen, stempeln, Netz wieder an → wird nachgereicht und als offline markiert.
+- **Kiosk-Menü:** Logo 1,5 s gedrückt halten, Kiosk-PIN `246810` → Vollbild, Neu laden, Entkoppeln.
+
 **Verwaltung** (als Admin Sophie, am besten am Desktop):
 
 - **Live:** Wer ist da, in Pause, erwartet, ohne Buchung, abwesend oder im Feierabend. Das Board aktualisiert sich in Echtzeit. Zum Ausprobieren in einem zweiten Fenster als Marvin einchecken.
@@ -77,6 +87,7 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 - **Zeiten:** alle Personen pro Tag oder eine Person über 14 Tage. Ein Klick öffnet den Editor. Jede Korrektur braucht eine Begründung, alte Buchungen werden nur als ungültig markiert.
 - **Audit-Log:** alle Änderungen mit Begründung und der Prüfung, ob die Hash-Kette unverändert ist
 - **Einstellungen:** Firma, Aufbewahrung (≥ 24 Monate), Betriebsrat (§ 87 BetrVG), DSGVO
+- **Standorte:** Geofence (inkl. „aktuellen Standort übernehmen“), Terminals anlegen, koppeln, entkoppeln, Online-Status. RFID-Chips weist du auf der Mitarbeiter-Detailseite zu.
 - **⌘K** öffnet die Befehlspalette (Navigation, Aktionen, Personensuche). `G` + Buchstabe springt direkt, z. B. `G F` zu Freigaben, `G M` zu Mitarbeitern.
 - Als **Teamleiter Jonas** siehst du nur dein Team und kein Audit-Log.
 
@@ -141,6 +152,11 @@ supabase/
 - Gestempelt wird nur über `public.stamp()`: Online zählt immer die **Serverzeit** (kein Zurückdatieren). Offline-Buchungen behalten die Gerätezeit, höchstens 72 h alt, und werden als `was_offline` markiert. Jede Buchung hat eine Client-UUID, deshalb legt ein doppelter Sync nichts doppelt an.
 - `work_days` wird bei jeder Buchung automatisch per Trigger neu berechnet.
 - **Regeln an genau einer Stelle:** `src/compliance` (reines TypeScript, 160+ Tests). Vor dem Stempeln prüft `/api/stamp` (warnen oder blockieren je nach Firmenregel), danach wird der Tag bewertet und die Verstöße werden gespeichert. Blockiert wird nur das Einchecken, nie Pause oder Auschecken. Offline-Nachträge werden nie blockiert.
+- **Terminals haben kein Benutzerkonto.** Sie werden per einmaligem Code gekoppelt und bekommen ein Geräte-Token (gespeichert nur als Hash). Gestempelt wird über `public.terminal_stamp()`, das nur der Server aufrufen darf.
+- **Rotierende QR-Codes** (alle 30 s, HMAC-signiert, ±1 Fenster Toleranz): Das Terminal erzeugt sie lokal, also auch offline. Ein Foto ist nach spätestens 90 s wertlos. Persönliche QR-Codes berechnet nur der Server.
+- **PIN & RFID:** Gespeichert wird nur ein HMAC je Firma. PINs vergibt das System (6-stellig, eindeutig), damit niemand über „schon vergeben“ fremde PINs erraten kann. Nach 5 Fehlversuchen sperrt das Terminal 5 Minuten.
+- **Geofence:** Der Standort wird nur beim Einchecken per App geprüft und nur mit Einwilligung gespeichert; ohne Einwilligung verwirft die Datenbank die Koordinaten.
+- **Doppel-Scan-Schutz:** Eine automatische Buchung innerhalb von 60 s nach der letzten wird abgewiesen.
 - Zeitgesteuerte Jobs: `GET /api/cron/auto-checkout` (stündlich) und `GET /api/cron/nightly` (täglich), geschützt per `Authorization: Bearer $CRON_SECRET`.
 
 **Bewusst getroffene Entscheidungen**
@@ -153,7 +169,7 @@ supabase/
 
 - **Stundenkonto:** Es zählt nur Tage mit Buchungen. Urlaub und Krankheit fließen ab Phase 7 ein. Rundung und Pausenabzug wirken bereits.
 - **Benachrichtigungen** werden gespeichert (z. B. „Korrektur genehmigt“). Eine Glocke in der App und Push-Nachrichten kommen in Phase 9.
-- **Geofence-Pflicht** lässt sich einstellen. Die Standortabfrage in der App kommt mit Phase 6.
+- **NFC** ist bewusst nicht umgesetzt: Statische NFC-Tags lassen sich kopieren, und Web NFC gibt es nur auf Android. RFID am Terminal deckt den Anwendungsfall sicherer ab.
 - **Einladung per E-Mail** öffnet dein Mailprogramm mit vorbereitetem Text. Ein eigener Mailversand folgt mit der Produktionseinrichtung.
 - **Offline:** Der Puffer greift, solange die App geöffnet ist. Das Öffnen der App ganz ohne Netz (Service Worker) folgt in Phase 9.
 

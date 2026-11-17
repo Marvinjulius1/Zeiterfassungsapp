@@ -25,6 +25,8 @@ async function Today() {
         initialEvents={data.events}
         targetMinutes={data.targetMinutes}
         isMinor={data.isMinor}
+        requireGeofence={data.requireGeofence}
+        geoConsent={data.geoConsent}
         weekMinutesBefore={data.weekMinutesBefore}
         nextShift={data.nextShift}
       />

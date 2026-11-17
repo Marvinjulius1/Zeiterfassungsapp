@@ -1,0 +1,21 @@
+/** Entfernung zweier Koordinaten in Metern (Haversine). */
+export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371000;
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Liegt die Position im Geofence? Die Messungenauigkeit wird zugunsten der
+ * Person berücksichtigt (max. 100 m), damit GPS-Rauschen niemanden aussperrt.
+ */
+export function insideGeofence(
+  pos: { lat: number; lng: number; accuracy?: number | null },
+  fence: { lat: number; lng: number; radiusM: number },
+): boolean {
+  const tolerance = Math.min(Math.max(pos.accuracy ?? 0, 0), 100);
+  return distanceMeters(pos, fence) <= fence.radiusM + tolerance;
+}

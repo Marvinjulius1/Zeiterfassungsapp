@@ -264,6 +264,29 @@ begin
     (v_org, v_koeln, null, ((v_today + 5) + time '10:00') at time zone 'Europe/Berlin', ((v_today + 5) + time '16:00') at time zone 'Europe/Berlin', 0, 'Service', 'published'),
     (v_org, v_hh,    null, ((v_today + 6) + time '07:00') at time zone 'Europe/Berlin', ((v_today + 6) + time '15:30') at time zone 'Europe/Berlin', 30, 'Lager', 'published');
 
+  -- ---------------------------------------------------------------------------
+  -- Terminals (Phase 6) – Demo-Kopplungscodes 111111 (Köln) / 222222 (Hamburg),
+  -- Kiosk-PIN 246810. Demo-PINs nutzen den Entwicklungs-Pepper (nur lokal!).
+  -- ---------------------------------------------------------------------------
+  insert into public.terminals (id, org_id, location_id, name) values
+    ('00000000-0000-4000-8000-0000000000a1', v_org, v_koeln, 'Eingang Köln'),
+    ('00000000-0000-4000-8000-0000000000a2', v_org, v_hh,    'Eingang Hamburg');
+  insert into public.terminal_secrets (terminal_id, kiosk_pin_hash, pairing_code_hash, pairing_expires_at)
+  select t.id,
+         encode(extensions.digest('kiosk:' || t.id || ':246810', 'sha256'), 'hex'),
+         encode(extensions.digest(case when t.name like '%Köln' then '111111' else '222222' end, 'sha256'), 'hex'),
+         now() + interval '30 days'
+    from public.terminals t where t.org_id = v_org;
+
+  update public.member_credentials c
+     set pin_hash = encode(extensions.hmac('pin:' || v_org || ':' || x.pin, 'zeitgeist-dev-pepper-do-not-use-in-production', 'sha256'), 'hex')
+    from (values ('marvin@zeitgeist.demo', '482915'), ('lena@zeitgeist.demo', '731406'), ('noah@zeitgeist.demo', '590327')) x(email, pin)
+    join public.memberships m on m.email = x.email
+   where c.membership_id = m.id;
+  update public.member_credentials c
+     set rfid_uid_hash = encode(extensions.hmac('rfid:' || v_org || ':04A2BC11', 'zeitgeist-dev-pepper-do-not-use-in-production', 'sha256'), 'hex')
+    from public.memberships m where m.email = 'lena@zeitgeist.demo' and c.membership_id = m.id;
+
   -- Vormonat abgeschlossen & gesperrt
   insert into public.month_closings (membership_id, month, employee_confirmed_at, locked_at)
   select m.id, date_trunc('month', v_today - interval '1 month')::date, now() - interval '10 days', now() - interval '8 days'

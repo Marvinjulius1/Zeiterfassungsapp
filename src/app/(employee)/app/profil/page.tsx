@@ -13,12 +13,20 @@ import { signOut } from "@/lib/auth/actions";
 import { ROLE_LABEL, canAccessAdmin } from "@/lib/auth/roles";
 import { requireMember } from "@/lib/auth/session";
 import { OrgSwitcher } from "./org-switcher";
+import { StampingSettings } from "@/features/terminal/profile-settings";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Profil" };
 
 async function ProfileContent() {
   const viewer = await requireMember();
   const { active } = viewer;
+  const supabase = await createClient();
+  const [{ data: cred }, { data: consent }] = await Promise.all([
+    createAdminClient().from("member_credentials").select("pin_hash").eq("membership_id", active.id).single(),
+    supabase.from("geo_consents").select("id").eq("membership_id", active.id).is("revoked_at", null).limit(1),
+  ]);
   return (
     <>
       <Card className="flex items-center gap-4">
@@ -48,6 +56,8 @@ async function ProfileContent() {
           </div>
         </ListGroup>
       </Card>
+
+      <StampingSettings hasPin={!!cred?.pin_hash} geoConsent={(consent?.length ?? 0) > 0} />
     </>
   );
 }

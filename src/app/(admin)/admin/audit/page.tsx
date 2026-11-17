@@ -129,7 +129,7 @@ async function Log({ searchParams }: { searchParams: PageProps<"/admin/audit">["
             return (
               <li key={r.id} className="grid gap-1 px-5 py-3.5 sm:grid-cols-[150px_1fr] sm:gap-4">
                 <span className="tabular text-sm text-fg-3">
-                  {new Date(r.created_at).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "medium" })}
+                  {new Date(r.created_at).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "medium", timeZone: "Europe/Berlin" })}
                 </span>
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-center gap-2 text-[15px]">

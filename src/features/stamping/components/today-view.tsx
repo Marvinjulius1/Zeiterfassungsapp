@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { CalendarClock, CloudOff, Coffee, LogIn, LogOut, Play } from "lucide-react";
 import { BigNumber } from "@/design-system/components/big-number";
@@ -21,6 +22,7 @@ import type { NextShift } from "../queries";
 import { useStamping } from "../use-stamping";
 import { HintList } from "./hint-card";
 import { Timeline } from "./timeline";
+import { AppStampMethods } from "@/features/terminal/app-methods";
 
 export interface TodayViewProps {
   membershipId: string;
@@ -28,6 +30,8 @@ export interface TodayViewProps {
   initialEvents: DayEvent[];
   targetMinutes: number;
   isMinor: boolean;
+  requireGeofence?: boolean;
+  geoConsent?: boolean;
   weekMinutesBefore: number;
   nextShift: NextShift | null;
 }
@@ -40,8 +44,11 @@ const SUCCESS: Record<EventKind, string> = {
 };
 
 export function TodayView(props: TodayViewProps) {
+  const router = useRouter();
   const now = useNow();
-  const { events, summary, stamp, busy, pendingCount } = useStamping(props.membershipId, props.initialEvents, now);
+  const { events, summary, stamp, busy, pendingCount } = useStamping(props.membershipId, props.initialEvents, now, {
+    geofence: props.requireGeofence && props.geoConsent,
+  });
 
   useEffect(() => {
     const onRejected = (e: Event) =>
@@ -53,7 +60,14 @@ export function TodayView(props: TodayViewProps) {
   async function act(kind: EventKind) {
     const res = await stamp(kind);
     if (!res.ok) {
-      if (res.blocked) toast.warning("Gerade nicht möglich", { description: res.error });
+      if (kind === "check_in" && props.requireGeofence && !props.geoConsent) {
+        toast.warning("Standort-Einwilligung nötig", {
+          description: "Deine Firma erlaubt das Einchecken per App nur vor Ort. Erlaube die Standortprüfung im Profil – oder nutze das Terminal.",
+          action: { label: "Zum Profil", onClick: () => router.push("/app/profil") },
+        });
+      } else if (res.needsLocation) {
+        toast.warning("Standort nicht verfügbar", { description: "Bitte erlaube den Standortzugriff im Browser – oder nutze das Terminal." });
+      } else if (res.blocked) toast.warning("Gerade nicht möglich", { description: res.error });
       else toast.error(res.error ?? "Das hat nicht geklappt.");
       return;
     }
@@ -207,6 +221,8 @@ export function TodayView(props: TodayViewProps) {
           )}
         </div>
       </section>
+
+      <AppStampMethods />
 
       {hints.length > 0 && <HintList hints={hints} />}
 

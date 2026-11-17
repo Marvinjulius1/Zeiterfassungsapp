@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { berlinDateKey, isoWeekRange, isoWeekday } from "@/lib/time/berlin";
 import { isMinorOn } from "@/lib/people";
+import { resolveRules } from "@/compliance";
 import type { DayEvent } from "./day-state";
 
 export interface NextShift {
@@ -17,6 +18,10 @@ export interface TodayData {
   events: DayEvent[];
   targetMinutes: number;
   isMinor: boolean;
+  /** Firmenregel: Einchecken per App nur am Arbeitsort */
+  requireGeofence: boolean;
+  /** Einwilligung zur Standortprüfung liegt vor */
+  geoConsent: boolean;
   /** Netto-Minuten dieser Woche ohne den angezeigten Tag */
   weekMinutesBefore: number;
   nextShift: NextShift | null;
@@ -46,7 +51,7 @@ export async function getTodayData(membershipId: string): Promise<TodayData> {
       .eq("work_date", workDate)
       .is("voided_at", null)
       .order("occurred_at"),
-    supabase.from("memberships").select("birth_date").eq("id", membershipId).single(),
+    supabase.from("memberships").select("birth_date, org_id, location_id").eq("id", membershipId).single(),
     supabase
       .from("employment_contracts")
       .select("daily_targets")
@@ -74,12 +79,21 @@ export async function getTodayData(membershipId: string): Promise<TodayData> {
   ]);
 
   const targets = (contract.data?.daily_targets ?? {}) as Record<string, number>;
+  const m = member.data;
+  const [{ data: ruleSets }, { data: consent }] = await Promise.all([
+    supabase.from("rule_sets").select("scope, scope_id, settings").eq("org_id", m?.org_id ?? ""),
+    supabase.from("geo_consents").select("id").eq("membership_id", membershipId).is("revoked_at", null).limit(1),
+  ]);
+  const layer = (scope: string, id: string | null | undefined) => ruleSets?.find((r) => r.scope === scope && r.scope_id === id)?.settings ?? {};
+  const rules = resolveRules(layer("org", m?.org_id), layer("location", m?.location_id), layer("membership", membershipId));
 
   return {
     workDate,
     events: (events.data ?? []).map((e) => ({ id: e.id, kind: e.kind, occurredAt: e.occurred_at })),
     targetMinutes: Number(targets[String(isoWeekday(workDate))] ?? 0),
     isMinor: isMinorOn(member.data?.birth_date, workDate),
+    requireGeofence: rules.methods.requireGeofence,
+    geoConsent: (consent?.length ?? 0) > 0,
     weekMinutesBefore: (weekDays.data ?? []).reduce((s, d) => s + d.net_minutes, 0),
     nextShift: shift.data
       ? {

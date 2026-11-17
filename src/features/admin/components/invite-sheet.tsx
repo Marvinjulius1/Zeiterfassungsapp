@@ -22,7 +22,7 @@ export function InviteResult({ name, url, expiresAt }: { name: string; url: stri
   const mail = `mailto:?subject=${encodeURIComponent("Deine Einladung zu Zeitgeist")}&body=${encodeURIComponent(
     `Hallo ${name.split(" ")[0]},\n\nhier ist dein persönlicher Link zur Zeiterfassung:\n${url}\n\nEinfach öffnen, mit deiner E-Mail anmelden – fertig.\n`,
   )}`;
-  const until = new Date(expiresAt).toLocaleDateString("de-DE", { day: "numeric", month: "long" });
+  const until = new Date(expiresAt).toLocaleDateString("de-DE", { day: "numeric", month: "long", timeZone: "Europe/Berlin" });
 
   return (
     <div className="space-y-5">

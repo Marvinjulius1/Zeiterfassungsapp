@@ -699,16 +699,36 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"terminal_secrets": {
+                },"terminal_auth_failures": {
                   Row: {
-                    "kiosk_pin_hash": string | null,"pairing_code_hash": string | null,"pairing_expires_at": string | null,"rotated_at": string,"signing_secret": string,"terminal_id": string
+                    "created_at": string,"id": number,"method": string,"terminal_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "kiosk_pin_hash"?: string | null,"pairing_code_hash"?: string | null,"pairing_expires_at"?: string | null,"rotated_at"?: string,"signing_secret"?: string,"terminal_id": string
+                    "created_at"?: string,"id"?: never,"method": string,"terminal_id": string
                   }
                   Update: {
-                    "kiosk_pin_hash"?: string | null,"pairing_code_hash"?: string | null,"pairing_expires_at"?: string | null,"rotated_at"?: string,"signing_secret"?: string,"terminal_id"?: string
+                    "created_at"?: string,"id"?: never,"method"?: string,"terminal_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "terminal_auth_failures_terminal_id_fkey"
+      columns: ["terminal_id"]
+isOneToOne: false
+      referencedRelation: "terminals"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"terminal_secrets": {
+                  Row: {
+                    "device_token_hash": string | null,"kiosk_pin_hash": string | null,"paired_at": string | null,"pairing_code_hash": string | null,"pairing_expires_at": string | null,"rotated_at": string,"signing_secret": string,"terminal_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "device_token_hash"?: string | null,"kiosk_pin_hash"?: string | null,"paired_at"?: string | null,"pairing_code_hash"?: string | null,"pairing_expires_at"?: string | null,"rotated_at"?: string,"signing_secret"?: string,"terminal_id": string
+                  }
+                  Update: {
+                    "device_token_hash"?: string | null,"kiosk_pin_hash"?: string | null,"paired_at"?: string | null,"pairing_code_hash"?: string | null,"pairing_expires_at"?: string | null,"rotated_at"?: string,"signing_secret"?: string,"terminal_id"?: string
                   }
                   Relationships: [
                     {
@@ -892,6 +912,9 @@ isOneToOne: false
               "expires_at": string,"membership_id": string,"token": string
             }[]
                            },
+"member_stamp_state":
+{ Args: { "p_membership_id": string }; Returns: string
+                           },
 "reissue_invitation":
 { Args: { "p_membership": string }; Returns: {
               "expires_at": string,"token": string
@@ -908,6 +931,35 @@ isOneToOne: false
                            },
 "stamp":
 { Args: { "p_event_id": string,"p_geo_accuracy"?: number,"p_geo_lat"?: number,"p_geo_lng"?: number,"p_kind": Database["public"]['Enums']["time_event_kind"],"p_membership_id": string,"p_note"?: string,"p_occurred_at"?: string,"p_offline"?: boolean,"p_project_id"?: string,"p_source"?: Database["public"]['Enums']["time_event_source"] }; Returns: {
+              "created_by": string | null,
+"geo_accuracy_m": number | null,
+"geo_lat": number | null,
+"geo_lng": number | null,
+"id": string,
+"kind": Database["public"]['Enums']["time_event_kind"],
+"membership_id": string,
+"note": string | null,
+"occurred_at": string,
+"org_id": string,
+"project_id": string | null,
+"received_at": string,
+"source": Database["public"]['Enums']["time_event_source"],
+"supersedes_id": string | null,
+"terminal_id": string | null,
+"void_reason": string | null,
+"voided_at": string | null,
+"voided_by": string | null,
+"was_offline": boolean,
+"work_date": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "time_events"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"terminal_stamp":
+{ Args: { "p_event_id": string,"p_kind"?: Database["public"]['Enums']["time_event_kind"],"p_membership_id": string,"p_occurred_at"?: string,"p_offline"?: boolean,"p_source": Database["public"]['Enums']["time_event_source"],"p_terminal_id": string }; Returns: {
               "created_by": string | null,
 "geo_accuracy_m": number | null,
 "geo_lat": number | null,

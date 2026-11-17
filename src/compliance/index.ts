@@ -14,3 +14,4 @@ export * from "./can-stamp";
 export * from "./rules/schema";
 export * from "./rules/company";
 export * from "./auto-checkout";
+export * from "./geo";

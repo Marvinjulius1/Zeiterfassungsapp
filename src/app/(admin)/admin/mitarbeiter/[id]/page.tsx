@@ -12,6 +12,8 @@ import { ViolationList } from "@/features/compliance/components/violation-list";
 import { AcknowledgeButton, ContractForm, DocumentsPanel, ProfileForm, ReissueInvite } from "@/features/admin/components/member-forms";
 import { CONTRACT_LABEL, getMemberDetail, getMemberOptions } from "@/features/admin/members";
 import { ROLE_LABEL, isOrgAdmin } from "@/lib/auth/roles";
+import { RfidCard } from "@/features/terminal/rfid-card";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminArea } from "@/lib/auth/session";
 import { formatDayShort } from "@/lib/time/berlin";
 import { formatHours } from "@/lib/time/format";
@@ -26,6 +28,7 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
   const [member, options] = await Promise.all([getMemberDetail(viewer.active.orgId, id), getMemberOptions(viewer.active.orgId)]);
   if (!member) notFound();
   const canEdit = isOrgAdmin(viewer.active.role);
+  const { data: cred } = await createAdminClient().from("member_credentials").select("rfid_uid_hash").eq("membership_id", member.id).single();
 
   return (
     <div className="space-y-6">
@@ -95,6 +98,7 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
             )}
           </Card>
           <DocumentsPanel member={member} orgId={viewer.active.orgId} canEdit={canEdit} />
+          <RfidCard membershipId={member.id} hasChip={!!cred?.rfid_uid_hash} canEdit={canEdit} />
           <Card>
             <CardHeader title="Verlauf" subtitle="Änderungen an diesem Profil (Audit-Log)" />
             <ol className="space-y-3">
@@ -102,7 +106,7 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
                 <li key={h.id} className="text-sm">
                   <p className="text-fg">
                     <span className="font-medium">{ACTION[h.action] ?? h.action}</span>{" "}
-                    <span className="text-fg-3">· {new Date(h.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}</span>
+                    <span className="text-fg-3">· {new Date(h.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Berlin" })}</span>
                   </p>
                   {h.changes && <p className="mt-0.5 break-words text-fg-2">{h.changes}</p>}
                   {h.reason && <p className="mt-0.5 text-fg-3">„{h.reason}“</p>}

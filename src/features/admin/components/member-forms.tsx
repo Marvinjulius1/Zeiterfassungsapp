@@ -213,7 +213,7 @@ export function DocumentsPanel({ member, orgId, canEdit }: { member: MemberDetai
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[15px] font-medium">{d.title}</p>
                 <p className="text-sm text-fg-2">
-                  {CATEGORY_LABEL[d.category]} · {new Date(d.createdAt).toLocaleDateString("de-DE")}
+                  {CATEGORY_LABEL[d.category]} · {new Date(d.createdAt).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}
                   {d.sizeBytes ? ` · ${Math.max(1, Math.round(d.sizeBytes / 1024))} KB` : ""}
                 </p>
               </div>

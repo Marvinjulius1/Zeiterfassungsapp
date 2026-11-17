@@ -16,6 +16,8 @@ export type HapticPattern = keyof typeof patterns;
 
 export function haptic(pattern: HapticPattern = "tick"): void {
   if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+  // Browser erlauben Vibration erst nach einer Nutzerinteraktion (sonst Konsolen-Warnung)
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches && pattern === "tick") return;
   try {
     const p = patterns[pattern];

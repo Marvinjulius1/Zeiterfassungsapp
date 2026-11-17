@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { Database } from "./database.types";
 import { supabaseKey, supabaseUrl } from "./env";
 
-const PROTECTED = ["/app", "/admin", "/onboarding"];
+const PROTECTED = ["/app", "/admin", "/onboarding", "/scan"];
 
 /**
  * Erneuert die Supabase-Session bei jeder Anfrage und schützt private Bereiche.

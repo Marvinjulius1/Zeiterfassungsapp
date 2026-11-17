@@ -10,6 +10,7 @@ export interface StampResult {
   ok: boolean;
   offline?: boolean;
   blocked?: boolean;
+  needsLocation?: boolean;
   error?: string;
   event?: DayEvent;
   warnings?: { code: string; message: string; severity: string }[];
@@ -22,6 +23,7 @@ async function postStamp(body: {
   kind: EventKind;
   offline?: boolean;
   occurredAt?: string;
+  geo?: { lat: number; lng: number; accuracy?: number };
 }): Promise<StampResponse> {
   const res = await fetch("/api/stamp", {
     method: "POST",
@@ -36,7 +38,19 @@ async function postStamp(body: {
  * Stempel-Logik für die Mitarbeiter-App:
  * optimistisches Update → Server (stamp RPC) → bei Netzwerkfehler Offline-Puffer.
  */
-export function useStamping(membershipId: string, initialEvents: DayEvent[], now: Date) {
+/** Standort einmalig für den Check-in abfragen (kein Tracking). */
+function currentPosition(): Promise<{ lat: number; lng: number; accuracy: number } | undefined> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(undefined);
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }),
+      () => resolve(undefined),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    );
+  });
+}
+
+export function useStamping(membershipId: string, initialEvents: DayEvent[], now: Date, opts: { geofence?: boolean } = {}) {
   const [events, setEvents] = useState<DayEvent[]>(initialEvents);
   const [busy, setBusy] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -132,7 +146,8 @@ export function useStamping(membershipId: string, initialEvents: DayEvent[], now
         if (typeof navigator !== "undefined" && navigator.onLine === false) return await goOffline();
         let res: StampResponse;
         try {
-          res = await postStamp({ membershipId, eventId: optimistic.id, kind });
+          const geo = opts.geofence && kind === "check_in" ? await currentPosition() : undefined;
+          res = await postStamp({ membershipId, eventId: optimistic.id, kind, geo });
         } catch (e) {
           if (isNetworkError({ message: String(e), code: "" })) return await goOffline();
           throw e;
@@ -140,7 +155,7 @@ export function useStamping(membershipId: string, initialEvents: DayEvent[], now
         if (!res.ok) {
           setEvents((ev) => ev.filter((e) => e.id !== optimistic.id));
           haptic(res.blocked ? "warning" : "error");
-          return { ok: false, error: res.error, blocked: res.blocked };
+          return { ok: false, error: res.error, blocked: res.blocked, needsLocation: res.needsLocation };
         }
         const confirmed: DayEvent = { id: res.event.id, kind: res.event.kind as EventKind, occurredAt: res.event.occurredAt };
         setEvents((ev) => ev.map((e) => (e.id === optimistic.id ? confirmed : e)));
@@ -149,7 +164,7 @@ export function useStamping(membershipId: string, initialEvents: DayEvent[], now
         setBusy(false);
       }
     },
-    [membershipId, refreshPending, summary.state],
+    [membershipId, refreshPending, summary.state, opts.geofence],
   );
 
   return { events, summary, stamp, busy, pendingCount, flush };
