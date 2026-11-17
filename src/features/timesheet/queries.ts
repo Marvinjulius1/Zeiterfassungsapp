@@ -105,7 +105,16 @@ export async function getTimesheet(membershipId: string, view: View, date: strin
           lastOut: w.last_out,
           status: w.status as DayRow["status"],
         }
-      : { date: d, netMinutes: 0, breakMinutes: 0, targetMinutes: targetFor(d), firstIn: null, lastOut: null, status: "none" };
+      : {
+          date: d,
+          netMinutes: 0,
+          breakMinutes: 0,
+          // vor dem ersten erfassten Tag gibt es kein Soll (wie beim Stundenkonto)
+          targetMinutes: balance.since && d >= balance.since ? targetFor(d) : 0,
+          firstIn: null,
+          lastOut: null,
+          status: "none",
+        };
   });
 
   // Soll nur für vergangene/heutige Tage zählen, damit die Woche nicht „im Minus" startet

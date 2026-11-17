@@ -309,7 +309,7 @@ export function RulesEditor({ scope, scopeId, scopeLabel, parent, initial, canEd
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={spring.gentle}
-            className="fixed inset-x-0 bottom-6 z-40 mx-auto flex w-[min(560px,calc(100%-32px))] items-center justify-between gap-3 rounded-full border border-line bg-surface-2 py-2 pl-5 pr-2 lg:ml-[calc(50%+130px-280px)]"
+            className="fixed inset-x-0 bottom-6 z-40 mx-auto flex w-[min(560px,calc(100%-32px))] items-center justify-between gap-3 rounded-full border border-line bg-surface-2 py-2 shadow-[0_12px_40px_rgb(0_0_0/0.35)] pl-5 pr-2 lg:ml-[calc(50%+130px-280px)]"
           >
             <span className="text-sm font-medium">Ungespeicherte Änderungen · {scopeLabel}</span>
             <span className="flex gap-2">

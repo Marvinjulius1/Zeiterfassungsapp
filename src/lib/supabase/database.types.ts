@@ -435,14 +435,14 @@ isOneToOne: false
                   ]
                 },"organizations": {
                   Row: {
-                    "created_at": string,"default_state": string,"has_works_council": boolean,"id": string,"name": string,"onboarding_completed_at": string | null,"retention_months": number,"slug": string,"timezone": string,"updated_at": string
+                    "created_at": string,"default_state": string,"has_works_council": boolean,"id": string,"name": string,"onboarding_completed_at": string | null,"payroll_settings": NonNullable<Json>,"retention_months": number,"slug": string,"timezone": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"default_state"?: string,"has_works_council"?: boolean,"id"?: string,"name": string,"onboarding_completed_at"?: string | null,"retention_months"?: number,"slug": string,"timezone"?: string,"updated_at"?: string
+                    "created_at"?: string,"default_state"?: string,"has_works_council"?: boolean,"id"?: string,"name": string,"onboarding_completed_at"?: string | null,"payroll_settings"?: NonNullable<Json>,"retention_months"?: number,"slug": string,"timezone"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"default_state"?: string,"has_works_council"?: boolean,"id"?: string,"name"?: string,"onboarding_completed_at"?: string | null,"retention_months"?: number,"slug"?: string,"timezone"?: string,"updated_at"?: string
+                    "created_at"?: string,"default_state"?: string,"has_works_council"?: boolean,"id"?: string,"name"?: string,"onboarding_completed_at"?: string | null,"payroll_settings"?: NonNullable<Json>,"retention_months"?: number,"slug"?: string,"timezone"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -905,6 +905,9 @@ isOneToOne: false
 "claim_open_shift":
 { Args: { "p_shift": string }; Returns: undefined
                            },
+"confirm_month":
+{ Args: { "p_membership_id": string,"p_month": string,"p_snapshot": Json }; Returns: undefined
+                           },
 "create_organization":
 { Args: { "p_display_name": string,"p_location_name": string,"p_name": string,"p_state": unknown }; Returns: string
                            },
@@ -922,6 +925,9 @@ isOneToOne: false
 { Args: { "p_org": string }; Returns: {
               "display_name": string,"id": string,"location_id": string,"team_id": string
             }[]
+                           },
+"lock_months":
+{ Args: { "p_items": Json,"p_month": string }; Returns: number
                            },
 "member_stamp_state":
 { Args: { "p_membership_id": string }; Returns: string
@@ -1039,6 +1045,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"unlock_month":
+{ Args: { "p_membership_id": string,"p_month": string,"p_reason": string }; Returns: undefined
+                           },
 "verify_audit_chain":
 { Args: { "p_org": string }; Returns: number
                            }

@@ -173,7 +173,7 @@ export function MemberList({ members, locations, teams, canEdit }: { members: Me
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={spring.gentle}
-            className="fixed inset-x-0 bottom-6 z-40 mx-auto flex w-[min(720px,calc(100%-32px))] flex-wrap items-center gap-2 rounded-[28px] border border-line bg-surface-2 p-2 pl-5 lg:ml-[calc(50%+130px-360px)]"
+            className="fixed inset-x-0 bottom-6 z-40 mx-auto flex w-[min(720px,calc(100%-32px))] flex-wrap items-center gap-2 rounded-[28px] border border-line bg-surface-2 p-2 shadow-[0_12px_40px_rgb(0_0_0/0.35)] pl-5 lg:ml-[calc(50%+130px-360px)]"
             role="toolbar"
             aria-label="Aktionen für Auswahl"
           >

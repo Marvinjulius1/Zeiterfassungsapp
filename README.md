@@ -3,7 +3,7 @@
 Zeiterfassung, die Spaß macht – für Unternehmen in Deutschland.
 Mitarbeiter-App (mobile first), Verwaltung (Desktop/Tablet) und Terminal-Modus in einer Next.js-App mit Supabase.
 
-> Stand: **Phase 7 – Abwesenheiten & Schichtplanung** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
+> Stand: **Phase 8 – Berichte, Export & Monatsabschluss** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
 
 ---
 
@@ -109,6 +109,18 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 - Als **Noah** zwischen 20 und 6 Uhr einchecken → wird wegen der Nachtruhe blockiert (§ 14 JArbSchG)
 - In „Meine Zeiten“ → Tag stehen die Hinweise des Tages mit Rechtsgrundlage
 - Alle Regeln und Annahmen: [docs/COMPLIANCE.md](docs/COMPLIANCE.md)
+
+**Berichte & Monatsabschluss** (Phase 8):
+
+- Als **Marvin** → Zeiten → *Monat* → September: **„Monat bestätigen“** und **Stundenzettel (PDF)**. Oktober ist in der Demo schon abgeschlossen, der laufende Monat lässt sich erst nach Monatsende bestätigen.
+- Als **Sophie** → **Verwaltung → Berichte**: Standard ist der Vormonat. Du siehst Ist, Soll, Saldo, Konto, Urlaub/Krank und den Status (offen, bestätigt, abgeschlossen) je Person. Offene Punkte wie fehlendes Ausstempeln oder offene Korrekturen werden markiert.
+  - Exporte: **CSV** (Semikolon, für deutsches Excel), **Excel** (Übersicht + Tage) und **DATEV LODAS** (Bewegungsdaten je Lohnart).
+  - Personen anhaken → **„Monat abschließen“**. Danach können nur noch Admins mit Begründung ändern. **Wieder öffnen** geht nur mit Begründung und wird im Audit-Log protokolliert.
+  - ⚙️ neben DATEV: Berater- und Mandantennummer sowie Lohnarten.
+- Als **Jonas** (Teamleiter): Berichte und CSV/Excel nur für das eigene Team, kein DATEV und kein Abschließen.
+- Jeder Export fremder Daten wird im **Audit-Log** festgehalten.
+
+> **DATEV-Hinweis:** Die Lohnarten-Nummern (100, 200, 300 …) sind Platzhalter. Bitte vor dem ersten echten Import mit eurem Steuerbüro abstimmen. Die Personalnummer muss der in LODAS entsprechen (nur Ziffern, max. 5 Stellen, z. B. „Z-003“ → 3). Erst eine Test-Datei importieren lassen.
 
 **Allgemein:**
 

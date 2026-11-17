@@ -11,11 +11,13 @@ import { CorrectionSheet } from "@/features/timesheet/components/correction-shee
 import { ViolationList } from "@/features/compliance/components/violation-list";
 import { DayList } from "@/features/timesheet/components/day-list";
 import { PeriodNav } from "@/features/timesheet/components/period-nav";
+import { MonthConfirmCard } from "@/features/reports/components/month-confirm-card";
 import { CORRECTION_KIND_LABEL, STATUS_LABEL } from "@/features/timesheet/labels";
 import { parseDate, parseView } from "@/features/timesheet/periods";
 import { getTimesheet, type Timesheet } from "@/features/timesheet/queries";
 import { requireMember } from "@/lib/auth/session";
-import { berlinDateKey, formatWeekdayShort } from "@/lib/time/berlin";
+import { createClient } from "@/lib/supabase/server";
+import { berlinDateKey, formatMonth, formatWeekdayShort, monthRange } from "@/lib/time/berlin";
 import { formatHours } from "@/lib/time/format";
 
 export const metadata: Metadata = { title: "Meine Zeiten" };
@@ -31,11 +33,20 @@ function Totals({ t }: { t: Timesheet["totals"] }) {
       ].map(([label, value]) => (
         <div key={label} className="px-3 first:pl-0 last:pr-0">
           <p className="text-sm text-fg-2">{label}</p>
-          <p className="tabular mt-1 text-lg font-semibold">{value}</p>
+          <p className="tabular mt-1 whitespace-nowrap text-lg font-semibold">{value}</p>
         </div>
       ))}
     </div>
   );
+}
+
+async function loadClosing(membershipId: string, from: string, to: string) {
+  const supabase = await createClient();
+  const [{ data: c }, { count }] = await Promise.all([
+    supabase.from("month_closings").select("employee_confirmed_at, locked_at").eq("membership_id", membershipId).eq("month", from).maybeSingle(),
+    supabase.from("work_days").select("work_date", { count: "exact", head: true }).eq("membership_id", membershipId).eq("status", "incomplete").gte("work_date", from).lte("work_date", to),
+  ]);
+  return { confirmedAt: c?.employee_confirmed_at ?? null, lockedAt: c?.locked_at ?? null, incompleteDays: count ?? 0 };
 }
 
 async function Content({ searchParams }: { searchParams: PageProps<"/app/zeiten">["searchParams"] }) {
@@ -47,6 +58,8 @@ async function Content({ searchParams }: { searchParams: PageProps<"/app/zeiten"
   const today = berlinDateKey();
   const ts = await getTimesheet(viewer.active.id, view, date);
   const dayHref = (d: string) => `/app/zeiten?view=day&date=${d}`;
+  const month = view === "month" ? monthRange(date) : null;
+  const closing = month ? await loadClosing(viewer.active.id, month.from, month.to) : null;
 
   return (
     <>
@@ -78,6 +91,18 @@ async function Content({ searchParams }: { searchParams: PageProps<"/app/zeiten"
           )}
           <Totals t={ts.totals} />
         </Card>
+      )}
+
+      {month && closing && (
+        <MonthConfirmCard
+          key={month.from}
+          month={month.from}
+          label={formatMonth(month.from)}
+          isPast={month.to < today}
+          confirmedAt={closing.confirmedAt}
+          lockedAt={closing.lockedAt}
+          incompleteDays={closing.incompleteDays}
+        />
       )}
 
       {view !== "day" ? (
