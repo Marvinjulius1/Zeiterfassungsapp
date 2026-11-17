@@ -3,6 +3,13 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(8);
 
+-- Unabhängig vom aktuellen Datenstand: Marvin ist zu Beginn ausgecheckt (wird am Ende zurückgerollt)
+insert into public.time_events (id, org_id, membership_id, kind, occurred_at, work_date, source)
+select gen_random_uuid(), m.org_id, m.id, 'check_out', now() - interval '1 minute',
+       (select work_date from public.time_events where membership_id = m.id and voided_at is null order by occurred_at desc limit 1), 'admin'
+  from public.memberships m
+ where m.email = 'marvin@zeitgeist.demo' and public.member_stamp_state(m.id) <> 'out';
+
 create or replace function pg_temp.login(p_email text) returns void language plpgsql as $$
 begin
   perform set_config('request.jwt.claims',

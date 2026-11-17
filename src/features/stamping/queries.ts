@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { berlinDateKey, isoWeekRange, isoWeekday } from "@/lib/time/berlin";
 import { isMinorOn } from "@/lib/people";
 import { resolveRules } from "@/compliance";
-import type { DayEvent } from "./day-state";
+import { STALE_AFTER_HOURS, type DayEvent } from "./day-state";
 
 export interface NextShift {
   startsAt: string;
@@ -15,6 +15,8 @@ export interface NextShift {
 
 export interface TodayData {
   workDate: string;
+  /** Arbeitstag mit vergessenem Ausstempeln (offener Block > 16 h) */
+  missingCheckOut: string | null;
   events: DayEvent[];
   targetMinutes: number;
   isMinor: boolean;
@@ -34,13 +36,14 @@ export async function getTodayData(membershipId: string): Promise<TodayData> {
   // Läuft noch ein Block (z. B. Nachtschicht von gestern)? Dann gehört er zum Arbeitstag des Check-ins.
   const { data: last } = await supabase
     .from("time_events")
-    .select("kind, work_date")
+    .select("kind, work_date, occurred_at")
     .eq("membership_id", membershipId)
     .is("voided_at", null)
     .order("occurred_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const workDate = last && last.kind !== "check_out" ? last.work_date : today;
+  const stale = !!last && last.kind !== "check_out" && Date.now() - Date.parse(last.occurred_at) > STALE_AFTER_HOURS * 3600000;
+  const workDate = last && last.kind !== "check_out" && !stale ? last.work_date : today;
   const week = isoWeekRange(workDate);
 
   const [events, member, contract, weekDays, shift] = await Promise.all([
@@ -89,6 +92,7 @@ export async function getTodayData(membershipId: string): Promise<TodayData> {
 
   return {
     workDate,
+    missingCheckOut: stale ? last.work_date : null,
     events: (events.data ?? []).map((e) => ({ id: e.id, kind: e.kind, occurredAt: e.occurred_at })),
     targetMinutes: Number(targets[String(isoWeekday(workDate))] ?? 0),
     isMinor: isMinorOn(member.data?.birth_date, workDate),

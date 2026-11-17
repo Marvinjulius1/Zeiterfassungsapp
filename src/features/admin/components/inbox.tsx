@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "motion/react";
 import { Check, X } from "lucide-react";
 import { Avatar } from "@/design-system/components/avatar";
@@ -12,12 +13,14 @@ import { spring } from "@/design-system/motion";
 import { cn } from "@/lib/cn";
 import { haptic } from "@/lib/haptics";
 import { reviewAbsence, reviewCorrection } from "../actions";
+import { reviewClaim, reviewSwap } from "@/features/shifts/actions";
 import type { InboxItem } from "../queries";
 
 const isTyping = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
 
 export function Inbox({ initial }: { initial: InboxItem[] }) {
+  const router = useRouter();
   const [items, setItems] = useState(initial);
   const [activeRaw, setActive] = useState(0);
   const active = Math.max(0, Math.min(activeRaw, items.length - 1));
@@ -32,7 +35,7 @@ export function Inbox({ initial }: { initial: InboxItem[] }) {
       setRejecting(null);
       setNote("");
       start(async () => {
-        const fn = item.type === "correction" ? reviewCorrection : reviewAbsence;
+        const fn = { correction: reviewCorrection, absence: reviewAbsence, claim: reviewClaim, swap: reviewSwap }[item.type];
         const res = await fn(item.id, approve, reason);
         if (!res.ok) {
           toast.error(res.error);
@@ -40,9 +43,11 @@ export function Inbox({ initial }: { initial: InboxItem[] }) {
           return;
         }
         toast.success(`${item.title} von ${item.name.split(" ")[0]} ${approve ? "genehmigt" : "abgelehnt"}`);
+        // Abhängige Anträge (z. B. weitere Anfragen für dieselbe Schicht) sind jetzt evtl. erledigt
+        if (item.type === "claim" || item.type === "swap") router.refresh();
       });
     },
-    [],
+    [router],
   );
 
   // Tastatur: J/K bzw. ↓/↑ wechseln, A genehmigen, R ablehnen, Esc abbrechen
@@ -174,13 +179,15 @@ function InboxCard({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-[15px] font-semibold">{item.name}</p>
-              <Badge tone={item.type === "absence" ? "neutral" : "pause"}>{item.title}</Badge>
+              <Badge tone={item.type === "correction" ? "pause" : "neutral"}>{item.title}</Badge>
             </div>
             <p className="mt-0.5 text-sm text-fg-2">{item.subtitle}</p>
             <dl className="mt-3 space-y-1 text-sm">
               {item.details.map((d) => (
-                <div key={d.label} className="flex gap-3">
-                  <dt className="w-14 shrink-0 text-fg-3">{d.label}</dt>
+                <div key={d.label + d.value} className={cn("flex gap-3", d.label === "⚠︎" && "rounded-[12px] bg-alert-soft px-2 py-1")}>
+                  <dt className={cn("w-14 shrink-0", d.label === "⚠︎" ? "text-alert" : "text-fg-3")}>
+                    {d.label === "⚠︎" ? <span aria-label="Konflikt">⚠︎</span> : d.label}
+                  </dt>
                   <dd className="tabular text-fg">{d.value}</dd>
                 </div>
               ))}

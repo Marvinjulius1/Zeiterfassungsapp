@@ -37,10 +37,13 @@ declare
   v_lena_day  date;  -- > 10 h
   v_lukas_day date;  -- Spätschicht, am Folgetag zu früh → Ruhezeit
   v_noah_day  date;  -- Jugendlicher bis nach 20 Uhr
+  v_lukas_forgot date; -- Lukas hat das Ausstempeln vergessen (Korrekturantrag)
 begin
   select max(x)::date into v_lena_day  from generate_series(v_today - 14, v_today - 7, interval '1 day') x where extract(isodow from x) between 1 and 5;
   select max(x)::date into v_lukas_day from generate_series(v_today - 10, v_today - 3, interval '1 day') x where extract(isodow from x) between 1 and 4;
   select max(x)::date into v_noah_day  from generate_series(v_today - 8,  v_today - 2, interval '1 day') x where extract(isodow from x) in (1, 2, 4, 5);
+  select max(x)::date into v_lukas_forgot from generate_series(v_today - 6, v_today - 2, interval '1 day') x
+   where extract(isodow from x) between 1 and 5 and x::date not in (v_lukas_day, v_lukas_day + 1);
 
   perform setseed(0.42);
 
@@ -127,7 +130,7 @@ begin
       v_target := coalesce((r.targets::jsonb ->> extract(isodow from d)::text)::int, 0);
       continue when v_target = 0;
       continue when extract(isodow from d)::int = any (r.school);   -- Berufsschule
-      continue when random() < 0.04 and d not in (v_lena_day, v_lukas_day, v_lukas_day + 1, v_noah_day); -- gelegentlich frei
+      continue when random() < 0.04 and d not in (v_lena_day, v_lukas_day, v_lukas_day + 1, v_noah_day, v_lukas_forgot); -- gelegentlich frei
 
       v_jitter := (random() * 50)::int - 20;
       v_in := (d + time '08:00' + make_interval(mins => v_jitter)) at time zone 'Europe/Berlin';
@@ -178,8 +181,11 @@ begin
         insert into public.time_events (id, membership_id, kind, occurred_at, received_at, work_date, source) values
           (gen_random_uuid(), v_mid, 'check_in',    v_in,  v_in,  d, 'app'),
           (gen_random_uuid(), v_mid, 'break_start', v_bs,  v_bs,  d, 'app'),
-          (gen_random_uuid(), v_mid, 'break_end',   v_be,  v_be,  d, 'app'),
-          (gen_random_uuid(), v_mid, 'check_out',   v_out, v_out, d, 'app');
+          (gen_random_uuid(), v_mid, 'break_end',   v_be,  v_be,  d, 'app');
+        if not (r.email = 'lukas@zeitgeist.demo' and d = v_lukas_forgot) then
+          insert into public.time_events (id, membership_id, kind, occurred_at, received_at, work_date, source) values
+            (gen_random_uuid(), v_mid, 'check_out', v_out, v_out, d, 'app');
+        end if;
       end if;
     end loop;
   end loop;
@@ -229,11 +235,12 @@ begin
   -- Offene Anträge & Abwesenheiten
   -- ---------------------------------------------------------------------------
   insert into public.correction_requests (membership_id, work_date, kind, proposed, reason)
-  select m.id, v_today - 3, 'missing_check_out',
+  select m.id, d.day, 'missing_check_out',
          jsonb_build_array(jsonb_build_object('kind', 'check_out',
-           'occurred_at', ((v_today - 3) + time '17:05') at time zone 'Europe/Berlin')),
+           'occurred_at', (d.day + time '17:05') at time zone 'Europe/Berlin')),
          'Terminal war kurz offline, Ausstempeln vergessen.'
-    from public.memberships m where m.email = 'lukas@zeitgeist.demo';
+    from public.memberships m, (select v_lukas_forgot as day) d
+   where m.email = 'lukas@zeitgeist.demo';
 
   insert into public.absences (membership_id, type_id, start_date, end_date, status, note)
   select m.id, t.id, v_today + 21, v_today + 32, 'pending', 'Familienurlaub'
@@ -251,7 +258,7 @@ begin
          (dd.sd + time '08:00') at time zone 'Europe/Berlin',
          (dd.sd + time '08:00' + make_interval(mins => t.mins + case when t.mins > 360 then 30 else 0 end)) at time zone 'Europe/Berlin',
          case when t.mins > 360 then 30 else 0 end,
-         'published'
+         case when dd.sd >= v_today + 7 then 'draft' else 'published' end   -- nächste Woche noch Entwurf
     from public.memberships m
     join public.employment_contracts c on c.membership_id = m.id
     cross join lateral generate_series(v_today, v_today + 13, interval '1 day') g(day)
@@ -286,6 +293,19 @@ begin
   update public.member_credentials c
      set rfid_uid_hash = encode(extensions.hmac('rfid:' || v_org || ':04A2BC11', 'zeitgeist-dev-pepper-do-not-use-in-production', 'sha256'), 'hex')
     from public.memberships m where m.email = 'lena@zeitgeist.demo' and c.membership_id = m.id;
+
+  -- Schichtbörse: Lena möchte die offene Kölner Schicht übernehmen
+  insert into public.shift_claims (org_id, shift_id, membership_id)
+  select v_org, s.id, m.id from public.shifts s, public.memberships m
+   where s.org_id = v_org and s.membership_id is null and s.location_id = v_koeln and m.email = 'lena@zeitgeist.demo'
+   limit 1;
+
+  -- Schichttausch: Lukas → Sara, Sara hat schon zugestimmt (wartet auf Freigabe)
+  insert into public.shift_swap_requests (org_id, shift_id, requester_id, target_membership_id, target_accepted_at)
+  select v_org, s.id, s.membership_id, (select id from public.memberships where email = 'sara@zeitgeist.demo'), now()
+    from public.shifts s join public.memberships m on m.id = s.membership_id
+   where m.email = 'lukas@zeitgeist.demo' and s.status = 'published' and s.starts_at > now() + interval '1 day'
+   order by s.starts_at limit 1;
 
   -- Vormonat abgeschlossen & gesperrt
   insert into public.month_closings (membership_id, month, employee_confirmed_at, locked_at)

@@ -11,7 +11,8 @@ export const metadata: Metadata = { title: "Freigaben" };
 async function Content() {
   const viewer = await requireAdminArea();
   const items = await getInbox(viewer.active.orgId);
-  return <Inbox initial={items} />;
+  // key: nach Server-Refresh (z. B. erledigte Konkurrenz-Anfragen) neu aufbauen
+  return <Inbox key={items.map((i) => i.id).join(",")} initial={items} />;
 }
 
 export default function ApprovalsPage() {

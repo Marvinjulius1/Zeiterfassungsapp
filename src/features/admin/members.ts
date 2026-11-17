@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { berlinDateKey, isoWeekRange } from "@/lib/time/berlin";
+import { berlinDateKey, isoWeekRange, shiftDays } from "@/lib/time/berlin";
+import { loadBalance } from "@/features/timesheet/balance";
 
 export * from "./members-shared";
 import type { ContractType, MemberRow, Option } from "./members-shared";
@@ -76,11 +77,10 @@ export async function getMemberDetail(orgId: string, id: string): Promise<Member
     .maybeSingle();
   if (!m) return null;
 
-  const [contracts, weekDays, balance, adjustments, violations, documents, history] = await Promise.all([
+  const [contracts, weekDays, balance, violations, documents, history] = await Promise.all([
     supabase.from("employment_contracts").select("valid_from, valid_to, type, weekly_minutes, daily_targets, vacation_days_per_year, school_days, trust_based_hours").eq("membership_id", id).order("valid_from", { ascending: false }),
     supabase.from("work_days").select("net_minutes").eq("membership_id", id).gte("work_date", week.from).lte("work_date", week.to),
-    supabase.from("work_days").select("valued_minutes, target_minutes").eq("membership_id", id).lt("work_date", today).neq("status", "open"),
-    supabase.from("time_account_adjustments").select("minutes").eq("membership_id", id),
+    loadBalance(supabase, id, shiftDays(today, -1)),
     supabase.from("compliance_violations").select("id, work_date, severity, message, law").eq("membership_id", id).in("severity", ["violation", "warning"]).is("acknowledged_at", null).order("work_date", { ascending: false }).limit(8),
     supabase.from("documents").select("id, title, category, created_at, size_bytes").eq("membership_id", id).is("archived_at", null).order("created_at", { ascending: false }),
     supabase.from("audit_log").select("id, created_at, action, entity, reason, old_value, new_value").eq("org_id", orgId).eq("entity_id", id).order("id", { ascending: false }).limit(15),
@@ -116,8 +116,7 @@ export async function getMemberDetail(orgId: string, id: string): Promise<Member
       : null,
     contractHistory: (contracts.data ?? []).map((c) => ({ validFrom: c.valid_from, validTo: c.valid_to, type: c.type as ContractType, weeklyMinutes: c.weekly_minutes })),
     weekMinutes: (weekDays.data ?? []).reduce((s, d) => s + d.net_minutes, 0),
-    balanceMinutes:
-      (balance.data ?? []).reduce((s, w) => s + w.valued_minutes - w.target_minutes, 0) + (adjustments.data ?? []).reduce((s, a) => s + a.minutes, 0),
+    balanceMinutes: balance.minutes,
     violations: (violations.data ?? []).map((v) => ({ id: v.id, workDate: v.work_date, severity: v.severity, message: v.message, law: v.law })),
     documents: (documents.data ?? []).map((d) => ({ id: d.id, title: d.title, category: d.category, createdAt: d.created_at, sizeBytes: d.size_bytes })),
     history: (history.data ?? []).map((h) => ({

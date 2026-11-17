@@ -75,6 +75,12 @@ describe("summarizeDay", () => {
     expect(s.secondsSinceLastBreak).toBe(2 * 3600);
   });
 
+  it("vergessenes Ausstempeln: nach 16 h gilt der Block als beendet", () => {
+    const s = summarizeDay([ev("check_in", "07:00")], new Date("2026-11-17T00:30:00Z"));
+    expect(s.state).toBe("out");
+    expect(s.netSeconds).toBe(0);
+  });
+
   it("ignoriert ungültige Folgen und unsortierte Eingaben", () => {
     const s = summarizeDay([ev("check_out", "12:00"), ev("break_end", "08:00"), ev("check_in", "08:00")], at("13:00"));
     expect(s.netSeconds).toBe(4 * 3600);

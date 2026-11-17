@@ -27,6 +27,7 @@ import { AppStampMethods } from "@/features/terminal/app-methods";
 export interface TodayViewProps {
   membershipId: string;
   workDate: string;
+  missingCheckOut?: string | null;
   initialEvents: DayEvent[];
   targetMinutes: number;
   isMinor: boolean;
@@ -221,6 +222,22 @@ export function TodayView(props: TodayViewProps) {
           )}
         </div>
       </section>
+
+      {props.missingCheckOut && (
+        <button
+          type="button"
+          onClick={() => router.push(`/app/zeiten?view=day&date=${props.missingCheckOut}`)}
+          className="flex w-full items-center gap-3 rounded-[22px] bg-pause-soft p-4 text-left"
+        >
+          <span className="text-[15px]">
+            <strong>
+              Dir fehlt das Ausstempeln{" "}
+              {relativeDayLabel(props.missingCheckOut) === "Gestern" ? "von gestern" : `vom ${relativeDayLabel(props.missingCheckOut)}`}.
+            </strong>{" "}
+            <span className="text-fg-2">Tippe hier, um die Uhrzeit nachzutragen.</span>
+          </span>
+        </button>
+      )}
 
       <AppStampMethods />
 

@@ -899,6 +899,12 @@ isOneToOne: false
 "admin_correct_day":
 { Args: { "p_add": Json,"p_membership": string,"p_reason": string,"p_void": (string)[],"p_work_date": string }; Returns: number
                            },
+"cancel_absence":
+{ Args: { "p_absence": string }; Returns: undefined
+                           },
+"claim_open_shift":
+{ Args: { "p_shift": string }; Returns: undefined
+                           },
 "create_organization":
 { Args: { "p_display_name": string,"p_location_name": string,"p_name": string,"p_state": unknown }; Returns: string
                            },
@@ -912,19 +918,65 @@ isOneToOne: false
               "expires_at": string,"membership_id": string,"token": string
             }[]
                            },
+"list_colleagues":
+{ Args: { "p_org": string }; Returns: {
+              "display_name": string,"id": string,"location_id": string,"team_id": string
+            }[]
+                           },
 "member_stamp_state":
 { Args: { "p_membership_id": string }; Returns: string
+                           },
+"publish_shifts":
+{ Args: { "p_from": string,"p_location"?: string,"p_org": string,"p_to": string }; Returns: number
                            },
 "reissue_invitation":
 { Args: { "p_membership": string }; Returns: {
               "expires_at": string,"token": string
             }[]
                            },
+"request_absence":
+{ Args: { "p_attachment"?: string,"p_end": string,"p_half_end"?: boolean,"p_half_start"?: boolean,"p_membership_id": string,"p_note"?: string,"p_start": string,"p_type_key": string }; Returns: {
+              "attachment_path": string | null,
+"created_at": string,
+"end_date": string,
+"half_day_end": boolean,
+"half_day_start": boolean,
+"id": string,
+"membership_id": string,
+"note": string | null,
+"org_id": string,
+"review_note": string | null,
+"reviewed_at": string | null,
+"reviewed_by": string | null,
+"start_date": string,
+"status": Database["public"]['Enums']["request_status"],
+"substitute_membership_id": string | null,
+"type_id": string,
+"updated_at": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "absences"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"request_shift_swap":
+{ Args: { "p_shift": string,"p_target": string }; Returns: undefined
+                           },
+"respond_shift_swap":
+{ Args: { "p_accept": boolean,"p_request": string }; Returns: undefined
+                           },
 "review_absence":
 { Args: { "p_absence": string,"p_approve": boolean,"p_note"?: string }; Returns: undefined
                            },
 "review_correction":
 { Args: { "p_approve": boolean,"p_note"?: string,"p_request": string }; Returns: undefined
+                           },
+"review_shift_claim":
+{ Args: { "p_approve": boolean,"p_claim": string }; Returns: undefined
+                           },
+"review_shift_swap":
+{ Args: { "p_approve": boolean,"p_request": string }; Returns: undefined
                            },
 "self_apply_correction":
 { Args: { "p_request": string }; Returns: undefined

@@ -6,8 +6,6 @@ import { EmptyState } from "@/design-system/components/empty-state";
 
 /** Platzhalter für Verwaltungsbereiche späterer Phasen. */
 const sections = {
-  schichtplan: { title: "Schichtplan", phase: 7, text: "Drag-and-drop-Wochenplaner mit Konfliktprüfung." },
-  abwesenheiten: { title: "Abwesenheiten", phase: 7, text: "Teamkalender mit Feiertagen je Bundesland." },
   berichte: { title: "Berichte & Export", phase: 8, text: "PDF, CSV/Excel und DATEV-Lohnexport." },
 } as const;
 

@@ -49,7 +49,10 @@ export type ViolationCode =
   | "RULE_LATE_ARRIVAL"
   | "RULE_AUTO_BREAK_DEDUCTED"
   | "RULE_AUTO_CHECKOUT"
-  | "RULE_OVERTIME_APPROVAL";
+  | "RULE_OVERTIME_APPROVAL"
+  | "RULE_MISSING_CHECK_OUT"
+  | "PLAN_ABSENCE_CONFLICT"
+  | "PLAN_SHIFT_OVERLAP";
 
 export interface Violation {
   code: ViolationCode;

@@ -225,7 +225,7 @@ export async function evaluateMemberRange(
     violations.set(d, [...(violations.get(d) ?? []), ...list]);
   }
 
-  await persist(admin, ctx, days, violations, from, to, now);
+  await persist(admin, ctx, days, violations, from, to, now, holidays);
   return { days, violations };
 }
 
@@ -237,6 +237,7 @@ async function persist(
   from: string,
   to: string,
   now: Date,
+  holidaysForPersist: ReadonlyMap<string, string>,
 ) {
   // Tageswerte (nur bewertete Felder – Rohwerte rechnet die Datenbank selbst)
   for (const [date, ev] of days) {
@@ -244,6 +245,7 @@ async function persist(
       .from("work_days")
       .update({
         valued_minutes: ev.valuedMin,
+        target_minutes: targetOn(ctx, date, holidaysForPersist),
         auto_break_minutes: ev.autoBreakMin,
         surcharges: { ...ev.surcharges },
         evaluated_at: now.toISOString(),

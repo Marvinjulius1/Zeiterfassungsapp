@@ -3,7 +3,7 @@
 Zeiterfassung, die Spaß macht – für Unternehmen in Deutschland.
 Mitarbeiter-App (mobile first), Verwaltung (Desktop/Tablet) und Terminal-Modus in einer Next.js-App mit Supabase.
 
-> Stand: **Phase 6 – Terminal-Modus** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
+> Stand: **Phase 7 – Abwesenheiten & Schichtplanung** (siehe [docs/PLAN.md](docs/PLAN.md) für Datenmodell, Screens und Roadmap)
 
 ---
 
@@ -51,6 +51,7 @@ pnpm dev
 | admin@zeitgeist.demo | Admin | |
 | teamlead@zeitgeist.demo | Teamleiter | sieht nur Team „Service" (6 Personen) |
 | marvin@zeitgeist.demo | Mitarbeiter, Azubi | Berufsschule dienstags |
+| sara@zeitgeist.demo | Mitarbeiterin (Lager) | Tausch mit Lukas wartet auf Freigabe |
 | noah@zeitgeist.demo | Mitarbeiter, Azubi, 17 J. | Jugendarbeitsschutz |
 | anna@zeitgeist.demo | Mitarbeiterin | Mutterschutz-Flag |
 | tim@ / mia@zeitgeist.demo | Minijob | MiLoG-Dokumentation |
@@ -68,6 +69,16 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 - **Offline:** In den DevTools „Offline" wählen und stempeln → „1 Buchung wartet" → wieder online → wird automatisch synchronisiert
 - **Zeiten:** Stundenkonto, Woche als Chart, Monat als Liste, Tagesdetail mit Zeitstrahl → „Korrektur beantragen"
 - **Anträge:** Status deiner Korrekturen
+
+**Abwesenheiten & Schichten:**
+
+- **Anträge** (als Marvin): Resturlaub live, „Urlaub“ öffnet einen Kalender (Feiertage markiert, Berufsschul- und freie Tage kosten keinen Urlaub, halbe Tage möglich), „Krank“ mit AU-Foto. Offene Anträge lassen sich zurückziehen.
+- **Plan** (als Marvin): eigene Schichten mit „Tauschen“, Tauschanfragen an dich (z. B. als Lena zustimmen), Schichtbörse mit „Übernehmen“
+- **Verwaltung → Schichtplan:** Wochenraster, Drag-and-drop zwischen Personen und Tagen, Klick auf eine Zelle legt eine Schicht an (mit Vorlagen Früh/Normal/Spät). Konflikte (Ruhezeit, Höchstarbeitszeit, Jugendschutz, Urlaub/Krankheit, Doppelbuchung) erscheinen rot mit Begründung. Neue Schichten sind Entwürfe, bis du die Woche veröffentlichst; das Team wird benachrichtigt. „Vorwoche kopieren“ spart Zeit.
+- **Verwaltung → Abwesenheiten:** Monatskalender des Teams mit Feiertagen; Klick auf einen Tag trägt z. B. eine telefonische Krankmeldung ein
+- **Freigaben** enthält jetzt auch Schichtbörse und Schichttausch, inklusive Konfliktvorschau **vor** der Genehmigung
+- **Stundenkonto** rechnet jetzt richtig: Urlaub, Krankheit, Sonderurlaub und Berufsschule gelten als erfüllt, unbezahlte Abwesenheit hat kein Soll, Überstundenabbau zieht ab, Feiertage haben kein Soll, und fehlende Tage zählen als Minus. Gerechnet wird ab dem ersten erfassten Tag.
+- **Vergessenes Ausstempeln:** Ein offener Block, der vor mehr als 16 h begann, läuft nicht weiter. Der Tag wird als unvollständig markiert, und man kann am nächsten Tag ganz normal einchecken. Die App zeigt einen Hinweis zum Nachtragen.
 
 **Terminal** (Tablet am Eingang, im Browser einfach ein zweites Fenster):
 
@@ -167,7 +178,6 @@ supabase/
 
 ## Bekannte Grenzen (werden in späteren Phasen gelöst)
 
-- **Stundenkonto:** Es zählt nur Tage mit Buchungen. Urlaub und Krankheit fließen ab Phase 7 ein. Rundung und Pausenabzug wirken bereits.
 - **Benachrichtigungen** werden gespeichert (z. B. „Korrektur genehmigt“). Eine Glocke in der App und Push-Nachrichten kommen in Phase 9.
 - **NFC** ist bewusst nicht umgesetzt: Statische NFC-Tags lassen sich kopieren, und Web NFC gibt es nur auf Android. RFID am Terminal deckt den Anwendungsfall sicherer ab.
 - **Einladung per E-Mail** öffnet dein Mailprogramm mit vorbereitetem Text. Ein eigener Mailversand folgt mit der Produktionseinrichtung.

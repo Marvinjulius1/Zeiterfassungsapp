@@ -52,7 +52,11 @@ async function Dashboard() {
   }));
   const liveEvents: Record<string, { id: string; kind: "check_in" | "break_start" | "break_end" | "check_out"; occurredAt: string }[]> = {};
   for (const e of todayEvents.data ?? []) (liveEvents[e.membership_id] ??= []).push({ id: e.id, kind: e.kind, occurredAt: e.occurred_at });
-  const openRequests = (corrections.count ?? 0) + (absences.count ?? 0);
+  const [claims, swaps] = await Promise.all([
+    supabase.from("shift_claims").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending"),
+    supabase.from("shift_swap_requests").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending").not("target_accepted_at", "is", null),
+  ]);
+  const openRequests = (corrections.count ?? 0) + (absences.count ?? 0) + (claims.count ?? 0) + (swaps.count ?? 0);
 
   return (
     <div className="space-y-8">

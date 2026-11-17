@@ -64,6 +64,13 @@ export function evaluateDay(ctx: DayContext): DayEvaluation {
     if (ot) violations.push(ot);
   }
   if (auto.violation) violations.push(auto.violation);
+  if (iv.incomplete) {
+    violations.push({
+      code: "RULE_MISSING_CHECK_OUT",
+      severity: "warning",
+      message: "Ausstempeln fehlt – die Arbeitszeit dieses Tages ist unvollständig. Bitte Korrektur beantragen bzw. eintragen.",
+    });
+  }
   if (ctx.events.some((e) => e.source === "system_auto")) {
     violations.push({
       code: "RULE_AUTO_CHECKOUT",

@@ -1,10 +1,12 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { formatTime } from "@/lib/time/berlin";
-import { holidayMap, type State, addDaysKey, weekdayOf } from "@/compliance";
+import { holidayMap, type State, addDaysKey, weekdayOf, dateKeyOf } from "@/compliance";
+import { relativeDayLabel } from "@/lib/time/berlin";
+import { conflictsIfAssigned } from "@/features/shifts/queries";
 
 export interface InboxItem {
-  type: "correction" | "absence";
+  type: "correction" | "absence" | "claim" | "swap";
   id: string;
   membershipId: string;
   name: string;
@@ -36,7 +38,7 @@ export function workdaysBetween(from: string, to: string, state: State): number 
 
 export async function getInbox(orgId: string): Promise<InboxItem[]> {
   const supabase = await createClient();
-  const [corrections, absences, org] = await Promise.all([
+  const [corrections, absences, org, claims, swaps] = await Promise.all([
     supabase
       .from("correction_requests")
       .select("id, membership_id, work_date, kind, proposed, reason, created_at, memberships(display_name)")
@@ -50,7 +52,26 @@ export async function getInbox(orgId: string): Promise<InboxItem[]> {
       .eq("status", "pending")
       .order("created_at"),
     supabase.from("organizations").select("default_state").eq("id", orgId).single(),
+    supabase
+      .from("shift_claims")
+      .select("id, membership_id, created_at, memberships(display_name), shifts(id, starts_at, ends_at, break_minutes, membership_id, locations(name))")
+      .eq("org_id", orgId)
+      .eq("status", "pending")
+      .order("created_at"),
+    supabase
+      .from("shift_swap_requests")
+      .select("id, requester_id, target_membership_id, created_at, target_accepted_at, shifts!shift_swap_requests_shift_id_fkey(id, starts_at, ends_at, break_minutes, locations(name))")
+      .eq("org_id", orgId)
+      .eq("status", "pending")
+      .not("target_accepted_at", "is", null)
+      .order("created_at"),
   ]);
+  const swapNames = new Map<string, string>();
+  const swapIds = [...new Set((swaps.data ?? []).flatMap((w) => [w.requester_id, w.target_membership_id ?? ""]))].filter(Boolean);
+  if (swapIds.length) {
+    const { data: names } = await supabase.from("memberships").select("id, display_name").in("id", swapIds);
+    for (const n of names ?? []) swapNames.set(n.id, n.display_name);
+  }
 
   // aktuelle Buchungen der betroffenen Tage, damit man Vorher/Nachher sieht
   const days = corrections.data ?? [];
@@ -96,6 +117,44 @@ export async function getInbox(orgId: string): Promise<InboxItem[]> {
       details: [{ label: "Dauer", value: `${n} Arbeitstag${n === 1 ? "" : "e"}` }],
       reason: a.note,
       createdAt: a.created_at,
+    });
+  }
+  const shiftLabel = (sh: { starts_at: string; ends_at: string; locations: { name: string } | null } | null) =>
+    sh ? `${relativeDayLabel(dateKeyOf(new Date(sh.starts_at)))}, ${formatTime(sh.starts_at)}–${formatTime(sh.ends_at)}${sh.locations?.name ? ` · ${sh.locations.name}` : ""}` : "";
+  for (const c of claims.data ?? []) {
+    if (c.shifts?.membership_id) continue; // inzwischen vergeben
+    const warn = c.shifts
+      ? await conflictsIfAssigned(orgId, c.membership_id, { id: c.shifts.id, startsAt: c.shifts.starts_at, endsAt: c.shifts.ends_at, breakMinutes: c.shifts.break_minutes })
+      : [];
+    items.push({
+      type: "claim",
+      id: c.id,
+      membershipId: c.membership_id,
+      name: c.memberships?.display_name ?? "",
+      title: "Offene Schicht übernehmen",
+      subtitle: shiftLabel(c.shifts),
+      details: warn.map((w) => ({ label: "⚠︎", value: w })),
+      reason: null,
+      createdAt: c.created_at,
+    });
+  }
+  for (const w of swaps.data ?? []) {
+    items.push({
+      type: "swap",
+      id: w.id,
+      membershipId: w.requester_id,
+      name: swapNames.get(w.requester_id) ?? "",
+      title: "Schichttausch",
+      subtitle: shiftLabel(w.shifts),
+      details: [
+        { label: "An", value: `${swapNames.get(w.target_membership_id ?? "") ?? ""} (hat zugestimmt)` },
+        ...(w.shifts && w.target_membership_id
+          ? await conflictsIfAssigned(orgId, w.target_membership_id, { id: w.shifts.id, startsAt: w.shifts.starts_at, endsAt: w.shifts.ends_at, breakMinutes: w.shifts.break_minutes })
+          : []
+        ).map((v) => ({ label: "⚠︎", value: v })),
+      ],
+      reason: null,
+      createdAt: w.created_at,
     });
   }
   return items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));

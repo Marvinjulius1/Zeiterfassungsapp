@@ -52,6 +52,9 @@ export function nextState(state: StampState, kind: EventKind): StampState {
   return "out";
 }
 
+/** Gleiche Regel wie MAX_OPEN_HOURS (compliance) und app.stamp_state_at (DB) */
+export const STALE_AFTER_HOURS = 16;
+
 const secs = (a: Date, b: Date) => Math.max(0, Math.floor((b.getTime() - a.getTime()) / 1000));
 
 export function summarizeDay(events: readonly DayEvent[], now: Date): DaySummary {
@@ -101,6 +104,15 @@ export function summarizeDay(events: readonly DayEvent[], now: Date): DaySummary
         break;
     }
     state = nextState(state, e.kind);
+  }
+
+  // Vergessenes Ausstempeln: alter offener Block läuft nicht weiter
+  const last = sorted.at(-1);
+  if (state !== "out" && last && now.getTime() - new Date(last.occurredAt).getTime() > STALE_AFTER_HOURS * 3600000) {
+    state = "out";
+    blockStart = null;
+    breakStart = null;
+    workSegmentStart = null;
   }
 
   let secondsSinceLastBreak = 0;

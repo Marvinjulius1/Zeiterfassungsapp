@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { dateKeyOf, insideGeofence, type Violation } from "@/compliance";
+import { addDaysKey, dateKeyOf, insideGeofence, type Violation } from "@/compliance";
 import { checkStamp } from "@/features/compliance/check-stamp";
 import { evaluateMemberRange } from "@/features/compliance/evaluate-member";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -87,7 +87,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<StampResp
 
   try {
     const to = dateKeyOf(now) > data.work_date ? dateKeyOf(now) : data.work_date;
-    const result = await evaluateMemberRange(admin, body.membershipId, data.work_date, to, now);
+    // Beim Einchecken auch die Vortage bewerten (z. B. „Ausstempeln fehlt“ sofort sichtbar)
+    const result = await evaluateMemberRange(admin, body.membershipId, data.kind === "check_in" ? addDaysKey(data.work_date, -2) : data.work_date, to, now);
     if (body.kind === "check_out") {
       warnings = [...warnings, ...(result.violations.get(data.work_date) ?? []).filter((v) => v.severity === "violation")];
     }

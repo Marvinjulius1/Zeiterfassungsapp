@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { berlinDateKey, daysInRange, isoWeekday } from "@/lib/time/berlin";
 import type { DayEvent } from "@/features/stamping/day-state";
 import { rangeFor, type View } from "./periods";
+import { loadBalance } from "./balance";
+import { shiftDays } from "@/lib/time/berlin";
 
 export interface DayRow {
   date: string;
@@ -40,7 +42,7 @@ export async function getTimesheet(membershipId: string, view: View, date: strin
   const range = rangeFor(view, date);
   const today = berlinDateKey();
 
-  const [workDays, contract, history, adjustments, events, corrections, violations] = await Promise.all([
+  const [workDays, contract, balance, events, corrections, violations] = await Promise.all([
     supabase
       .from("work_days")
       .select("work_date, net_minutes, break_minutes, valued_minutes, target_minutes, first_in, last_out, status")
@@ -53,13 +55,7 @@ export async function getTimesheet(membershipId: string, view: View, date: strin
       .select("daily_targets, school_days, valid_from, valid_to")
       .eq("membership_id", membershipId)
       .order("valid_from", { ascending: false }),
-    supabase
-      .from("work_days")
-      .select("valued_minutes, target_minutes")
-      .eq("membership_id", membershipId)
-      .lt("work_date", today)
-      .neq("status", "open"),
-    supabase.from("time_account_adjustments").select("minutes").eq("membership_id", membershipId),
+    loadBalance(supabase, membershipId, shiftDays(today, -1)),
     view === "day"
       ? supabase
           .from("time_events")
@@ -122,9 +118,7 @@ export async function getTimesheet(membershipId: string, view: View, date: strin
     { net: 0, target: 0, breaks: 0 },
   );
 
-  const balanceMinutes =
-    (history.data ?? []).reduce((s, w) => s + w.valued_minutes - w.target_minutes, 0) +
-    (adjustments.data ?? []).reduce((s, a) => s + a.minutes, 0);
+  const balanceMinutes = balance.minutes;
 
   return {
     view,

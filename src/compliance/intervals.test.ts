@@ -19,6 +19,12 @@ describe("toIntervals", () => {
     expect(r.open).toBe(true);
     expect(totalMinutes(r.net)).toBe(75);
   });
+  it("vergessenes Ausstempeln: alter offener Block zählt nicht weiter", () => {
+    const r = toIntervals([ev("check_in", 8), ev("break_start", 12), ev("break_end", 12, 30)], localTime("2026-11-18", 12));
+    expect(r.incomplete).toBe(true);
+    expect(r.open).toBe(false);
+    expect(totalMinutes(r.net)).toBe(0);
+  });
   it("subtract und overlap", () => {
     expect(totalMinutes(subtract([{ start: t(8), end: t(12) }], [{ start: t(9), end: t(10) }]))).toBe(180);
     expect(overlapMinutes([{ start: t(20), end: t(23, 30) }], { start: t(22), end: t(23) })).toBe(60);

@@ -6,7 +6,12 @@ export interface DayIntervals {
   /** tatsächliche Arbeit (Anwesenheit minus Pausen) */
   net: Interval[];
   open: boolean;
+  /** offener Block, der zu lange zurückliegt → Ausstempeln vergessen, zählt nicht */
+  incomplete: boolean;
 }
+
+/** Ein offener Block gilt höchstens so lange als „läuft noch". */
+export const MAX_OPEN_HOURS = 16;
 
 /**
  * Wandelt Stempel-Ereignisse in Intervalle um. Ungültige Folgen werden ignoriert
@@ -34,12 +39,13 @@ export function toIntervals(events: readonly TimeEvent[], now: Date): DayInterva
       inAt = null;
     }
   }
-  const open = inAt !== null;
-  if (inAt) {
+  const incomplete = inAt !== null && now.getTime() - inAt.getTime() > MAX_OPEN_HOURS * 3600000;
+  const open = inAt !== null && !incomplete;
+  if (inAt && !incomplete) {
     if (breakAt) breaks.push({ start: breakAt, end: now });
     work.push({ start: inAt, end: now });
   }
-  return { work, breaks, net: subtract(work, breaks), open };
+  return { work, breaks, net: subtract(work, breaks), open, incomplete };
 }
 
 /** Intervalle a minus b */

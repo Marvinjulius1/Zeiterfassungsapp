@@ -20,3 +20,4 @@ export * from "./theme-toggle";
 export * from "./toaster";
 export * from "./toggle";
 export * from "./week-chart";
+export * from "./range-calendar";

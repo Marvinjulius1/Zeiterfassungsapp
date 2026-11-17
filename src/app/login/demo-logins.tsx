@@ -14,6 +14,8 @@ const accounts = [
   { email: "admin@zeitgeist.demo", name: "Sophie Wagner", role: "Admin" },
   { email: "teamlead@zeitgeist.demo", name: "Jonas Hoffmann", role: "Teamleiter" },
   { email: "marvin@zeitgeist.demo", name: "Marvin Julius", role: "Azubi" },
+  { email: "lena@zeitgeist.demo", name: "Lena Schmidt", role: "Service" },
+  { email: "sara@zeitgeist.demo", name: "Sara Fischer", role: "Lager" },
   { email: "noah@zeitgeist.demo", name: "Noah Klein", role: "Azubi, 17" },
   { email: "tim@zeitgeist.demo", name: "Tim Neumann", role: "Minijob" },
 ] as const;

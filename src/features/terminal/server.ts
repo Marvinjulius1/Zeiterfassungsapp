@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { dateKeyOf, type EventKind, type StampMethod } from "@/compliance";
+import { addDaysKey, dateKeyOf, type EventKind, type StampMethod } from "@/compliance";
 import { checkStamp } from "@/features/compliance/check-stamp";
 import { evaluateMemberRange } from "@/features/compliance/evaluate-member";
 import { createAdminClient, type AdminClient } from "@/lib/supabase/admin";
@@ -260,7 +260,8 @@ export async function stampViaTerminal(
 
   try {
     const to = dateKeyOf(now) > data.work_date ? dateKeyOf(now) : data.work_date;
-    await evaluateMemberRange(admin, opts.membershipId, data.work_date, to, now);
+    // Beim Einchecken auch die Vortage bewerten (z. B. „Ausstempeln fehlt“ sofort sichtbar)
+    await evaluateMemberRange(admin, opts.membershipId, data.kind === "check_in" ? addDaysKey(data.work_date, -2) : data.work_date, to, now);
   } catch (e) {
     console.error("Compliance-Bewertung fehlgeschlagen", e);
   }

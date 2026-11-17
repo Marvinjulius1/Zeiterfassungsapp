@@ -22,6 +22,7 @@ async function Today() {
       <TodayView
         membershipId={viewer.active.id}
         workDate={data.workDate}
+        missingCheckOut={data.missingCheckOut}
         initialEvents={data.events}
         targetMinutes={data.targetMinutes}
         isMinor={data.isMinor}

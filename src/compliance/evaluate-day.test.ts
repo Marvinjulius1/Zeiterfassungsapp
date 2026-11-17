@@ -55,6 +55,14 @@ describe("evaluateDay", () => {
   });
 });
 
+describe("vergessenes Ausstempeln", () => {
+  it("vergangener Tag ohne Check-out → Hinweis statt Fantasie-Stunden", () => {
+    const r = evaluateDay({ ...base, now: t(12, 0, "2026-11-20"), events: [ev("check_in", 8), ev("break_start", 12), ev("break_end", 12, 30)] });
+    expect(r.netMin).toBe(0);
+    expect(codes(r.violations)).toEqual(["RULE_MISSING_CHECK_OUT"]);
+  });
+});
+
 describe("automatisches Auschecken", () => {
   it("markiert den Tag zur Prüfung", () => {
     const r = evaluateDay({ ...base, events: [ev("check_in", 8), ev("break_start", 12), ev("break_end", 12, 30), { kind: "check_out", at: t(16, 30), source: "system_auto" }] });
