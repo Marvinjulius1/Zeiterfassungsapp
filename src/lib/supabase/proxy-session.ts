@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "./database.types";
+import { isBrowserOnlyPath, isNativeUserAgent } from "@/lib/native/request";
 import { supabaseKey, supabaseUrl } from "./env";
 
 const PROTECTED = ["/app", "/admin", "/onboarding", "/scan"];
@@ -10,6 +11,14 @@ const PROTECTED = ["/app", "/admin", "/onboarding", "/scan"];
  * Rollenprüfung passiert zusätzlich serverseitig in den Layouts (Defense in Depth).
  */
 export async function updateSession(request: NextRequest) {
+  // Native App: Verwaltung und Firmen-Anlage gibt es nur im Browser
+  if (isNativeUserAgent(request.headers.get("user-agent")) && isBrowserOnlyPath(request.nextUrl.pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/nur-im-browser";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(supabaseUrl(), supabaseKey(), {

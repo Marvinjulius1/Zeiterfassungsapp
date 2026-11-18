@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import { LogOut } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -13,6 +14,7 @@ import { ThemeToggle } from "@/design-system/components/theme-toggle";
 import { signOut } from "@/lib/auth/actions";
 import { ROLE_LABEL, canAccessAdmin } from "@/lib/auth/roles";
 import { requireMember } from "@/lib/auth/session";
+import { isNativeUserAgent } from "@/lib/native/request";
 import { OrgSwitcher } from "./org-switcher";
 import { StampingSettings } from "@/features/terminal/profile-settings";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -23,6 +25,8 @@ export const metadata: Metadata = { title: "Profil" };
 async function ProfileContent() {
   const viewer = await requireMember();
   const { active } = viewer;
+  // In der nativen App wird nicht verwaltet – der Link führt nur im Browser zur Verwaltung
+  const native = isNativeUserAgent((await headers()).get("user-agent"));
   const supabase = await createClient();
   const [{ data: cred }, { data: consent }] = await Promise.all([
     createAdminClient().from("member_credentials").select("pin_hash").eq("membership_id", active.id).single(),
@@ -50,7 +54,7 @@ async function ProfileContent() {
               />
             </div>
           )}
-          {canAccessAdmin(active.role) && <ListRow title="Zur Verwaltung" href="/admin" />}
+          {canAccessAdmin(active.role) && !native && <ListRow title="Zur Verwaltung" href="/admin" />}
           <div className="flex items-center justify-between gap-4 py-3.5">
             <span className="text-[15px] font-medium">Darstellung</span>
             <ThemeToggle />

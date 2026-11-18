@@ -143,6 +143,8 @@ Demo-Passwort für alle: `zeitgeist-demo`. Die Demo-Firma heißt *Zeitgeist Demo
 
 Zeitgeist gibt es als echte App zum Herunterladen, gebaut mit [Capacitor](https://capacitorjs.com). Die nativen Projekte liegen in `ios/` (Xcode) und `android/` (Android Studio). Die Oberfläche kommt vom Zeitgeist-Server, lokal von deinem Mac und später von der Online-Adresse. So sehen alle Mitarbeitenden immer denselben Stand.
 
+**Aufteilung:** Die App ist nur für die **Zeiterfassung** da. Alle, auch Admins und Teamleiter, landen dort auf „Heute“. **Verwaltet wird ausschließlich im Browser:** Ruft man in der App `/admin` oder das Anlegen einer Firma auf, erscheint ein Hinweis mit der Web-Adresse. Die App erkennt sich am Kennzeichen `ZeitgeistApp` im User-Agent. Das ist eine Bedien-Regel, die Rechte prüft weiterhin die Datenbank.
+
 **Was die App nativ kann:** echte Haptik (Taptic Engine), Statusleiste passend zu Hell/Dunkel, eigener Startbildschirm und Icon, Kamera (QR-Scan, Krankmeldung) und Standort mit iPhone-Berechtigungsdialog, Android-Zurück-Taste, PDF/CSV über das Teilen-Menü, frische Daten beim Zurückkehren aus dem Hintergrund und eine eigene „Keine Verbindung“-Seite.
 
 ### iPhone-Simulator (Mac mit Xcode)
